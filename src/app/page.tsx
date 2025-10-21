@@ -1,0 +1,81 @@
+import { Button } from "@/components/ui/button";
+import { Shield, Eye, AlertTriangle, Mail } from "lucide-react";
+import RegistrationForm from "@/components/forms/registration-form";
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Header */}
+      <header className="container mx-auto px-4 py-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Shield className="h-8 w-8 text-blue-600" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">DNSWatcher</h1>
+          </div>
+          <Button variant="outline">Sign In</Button>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <main className="container mx-auto px-4 py-12">
+        <div className="text-center mb-16">
+          <h2 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
+            Protect Your DNS Infrastructure
+          </h2>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+            Monitor your DNS zones for unauthorized changes and get instant notifications
+            when your domain&apos;s SOA records are modified. Stay ahead of DNS hijacking attacks.
+          </p>
+          <div className="flex justify-center space-x-4">
+            <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+              Start Monitoring
+            </Button>
+            <Button size="lg" variant="outline">
+              Learn More
+            </Button>
+          </div>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+            <Eye className="h-12 w-12 text-blue-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Real-time Monitoring</h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Continuous monitoring of your DNS zones with checks every 5 minutes
+              to detect unauthorized changes immediately.
+            </p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+            <AlertTriangle className="h-12 w-12 text-orange-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Instant Alerts</h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Get notified instantly via email when SOA records change, helping you
+              respond quickly to potential DNS hijacking attempts.
+            </p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+            <Mail className="h-12 w-12 text-green-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Email Notifications</h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Receive detailed email alerts with change history and recommendations
+              for securing your DNS infrastructure.
+            </p>
+          </div>
+        </div>
+
+        {/* Registration Form */}
+        <div className="max-w-2xl mx-auto">
+          <RegistrationForm />
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-8 mt-16">
+        <div className="container mx-auto px-4 text-center">
+          <p>&copy; 2024 DNSWatcher. Protecting your domains, one DNS record at a time.</p>
+        </div>
+      </footer>
+    </div>
+  );
+}
