@@ -3,6 +3,14 @@
 ## Project Overview
 DNSWatcher is a proof-of-concept web application for DNS security monitoring. It's built with modern web technologies to provide a simple yet effective way to monitor DNS zones for changes and notify users when their domains' SOA records change.
 
+## Repository Information
+- **Organization**: Axon-Shield
+- **Repository**: DNSWatcher
+- **URL**: https://github.com/Axon-Shield/DNSWatcher
+- **Status**: ✅ Fully deployed and operational
+- **Commits**: 10 commits with conventional commit messages
+- **Branch**: main (production-ready)
+
 ## Tech Stack
 - **Framework**: Next.js 14+ with App Router
 - **Language**: TypeScript
@@ -14,6 +22,7 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - **Backend**: Supabase Edge Functions (Deno)
 - **Automation**: pg_cron for scheduled tasks
 - **Email**: Supabase Edge Functions
+- **Version Control**: GitHub MCP integration
 
 ## Project Structure
 ```
@@ -183,3 +192,21 @@ context/                 # Context files for AI understanding
 - **Functions**: Deploy to Supabase Edge Functions
 - **Version Control**: Always commit changes with GitHub MCP
 - **Never**: Write direct SQL files or use external cron services
+
+## Current Status
+- ✅ **Project Setup**: Complete Next.js 14 application
+- ✅ **Database Schema**: Created and secured with RLS
+- ✅ **Edge Functions**: Deployed and active
+- ✅ **Cron Jobs**: Configured for automated monitoring
+- ✅ **Frontend Application**: Built and functional
+- ✅ **GitHub Integration**: MCP integration operational
+- ✅ **Documentation**: Complete setup and development guides
+- ✅ **Context Files**: AI understanding files created
+- ⏳ **Email Service**: Ready for SMTP integration
+
+## Development Workflow
+- **Context-Aware**: Automatic tool selection based on feature type
+- **GitHub MCP**: Automatic commits with descriptive messages
+- **Supabase MCP**: Database operations and Edge Function deployment
+- **Conventional Commits**: Standardized commit message format
+- **Documentation**: Always updated with new features
