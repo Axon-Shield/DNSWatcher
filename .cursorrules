@@ -1,0 +1,185 @@
+# DNSWatcher - DNS Security Monitoring Application
+
+## Project Overview
+DNSWatcher is a proof-of-concept web application for DNS security monitoring. It's built with modern web technologies to provide a simple yet effective way to monitor DNS zones for changes and notify users when their domains' SOA records change.
+
+## Tech Stack
+- **Framework**: Next.js 14+ with App Router
+- **Language**: TypeScript
+- **Frontend**: React 18+
+- **UI Components**: shadcn/ui + Radix UI primitives
+- **Styling**: Tailwind CSS
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Backend**: Supabase Edge Functions (Deno)
+- **Automation**: pg_cron for scheduled tasks
+- **Email**: Supabase Edge Functions
+
+## Project Structure
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Auth-related pages
+│   ├── api/               # API routes (proxy to Edge Functions)
+│   │   ├── auth/          # Authentication endpoints
+│   │   ├── zones/         # DNS zone management
+│   │   └── webhooks/      # External webhooks
+│   ├── dashboard/         # User dashboard
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Homepage (brochureware)
+├── components/            # Reusable UI components
+│   ├── ui/               # shadcn/ui components
+│   ├── forms/            # Form components
+│   └── layout/           # Layout components
+├── lib/                  # Utility functions
+│   ├── supabase.ts       # Supabase client
+│   ├── supabase-client.ts # Browser client
+│   ├── supabase-server.ts # Server client
+│   └── utils.ts         # General utilities
+├── types/               # TypeScript type definitions
+└── hooks/               # Custom React hooks
+docs/                    # Documentation files
+context/                 # Context files for AI understanding
+```
+
+## Context-Aware Development Rules
+
+### Backend/Server Features
+**Keywords**: "backend", "server", "API", "database", "cron", "automation", "edge function"
+**Auto-actions**:
+1. Use Supabase Edge Functions for all server logic
+2. Use Supabase MCP tools for database operations
+3. Use pg_cron for scheduled tasks
+4. Deploy functions immediately with mcp_supabase_deploy_edge_function
+5. Update context files in context/ folder
+6. **Git Commit**: Use mcp_github_push_files with descriptive commit message
+
+### Frontend/UI Features  
+**Keywords**: "frontend", "UI", "component", "page", "form", "styling", "react"
+**Auto-actions**:
+1. Create Next.js components in src/components/
+2. Use shadcn/ui for UI components
+3. Use Tailwind CSS for styling
+4. Follow App Router patterns
+5. Update context files in context/ folder
+6. **Git Commit**: Use mcp_github_push_files with descriptive commit message
+
+### Database/Schema Changes
+**Keywords**: "database", "schema", "table", "migration", "RLS", "sql"
+**Auto-actions**:
+1. Use mcp_supabase_apply_migration for all database changes
+2. Never write direct SQL files
+3. Always enable RLS on new tables
+4. Create proper indexes for performance
+5. Update context files in context/ folder
+6. **Git Commit**: Use mcp_github_push_files with descriptive commit message
+
+### DNS/Monitoring Features
+**Keywords**: "DNS", "monitoring", "SOA", "alert", "notification", "zone"
+**Auto-actions**:
+1. Update Edge Function logic in dns-monitor function
+2. Modify cron job schedules if needed
+3. Update monitoring context
+4. Test with real DNS queries
+5. Update context files in context/ folder
+6. **Git Commit**: Use mcp_github_push_files with descriptive commit message
+
+### Email/Notification Features
+**Keywords**: "email", "notification", "alert", "SMTP", "send"
+**Auto-actions**:
+1. Update send-email Edge Function
+2. Integrate with email service providers
+3. Test email delivery
+4. Update notification context
+5. Update context files in context/ folder
+6. **Git Commit**: Use mcp_github_push_files with descriptive commit message
+
+### GitHub Integration Rules
+**Keywords**: "commit", "git", "version control", "push", "pull request"
+**Auto-actions**:
+1. **Always commit changes** after implementing features
+2. **Use descriptive commit messages** following conventional commits
+3. **Commit patterns**:
+   - `feat:` for new features
+   - `fix:` for bug fixes
+   - `docs:` for documentation changes
+   - `refactor:` for code refactoring
+   - `chore:` for maintenance tasks
+   - `test:` for adding tests
+4. **Use mcp_github_push_files** for committing changes
+5. **Use mcp_github_create_pull_request** for feature branches
+6. **Use mcp_github_list_commits** to check commit history
+
+### Commit Message Patterns
+- **Frontend**: `feat(ui): add new component` or `fix(ui): resolve styling issue`
+- **Backend**: `feat(api): add new endpoint` or `fix(api): resolve edge function error`
+- **Database**: `feat(db): add new table` or `fix(db): resolve migration issue`
+- **DNS**: `feat(dns): add monitoring feature` or `fix(dns): resolve SOA detection`
+- **Email**: `feat(email): add notification service` or `fix(email): resolve delivery issue`
+- **Docs**: `docs: update setup guide` or `docs: add new context file`
+- **Refactor**: `refactor: clean up unused files` or `refactor: improve code structure`
+
+## Supabase Integration Details
+- **Project URL**: https://ipdbzqiypnvkgpgnsyva.supabase.co
+- **Anon Key**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwZGJ6cWl5cG52a2dwZ25zeXZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwMDcyMzYsImV4cCI6MjA3NjU4MzIzNn0.DnoH8NEp1CWGj4qQ4ow8x_HiFp7XC_PglS8pQb3ICVU
+- **Edge Functions**: dns-monitor, send-email (both active)
+- **Cron Jobs**: dns-monitor-job (every 5 minutes)
+- **RLS**: Enabled on all tables
+
+## Key Features
+1. **Brochureware Homepage**: Educational content about DNS security
+2. **User Registration**: Email + DNS zone registration
+3. **DNS Monitoring**: Background task checking SOA records every 5 minutes
+4. **Email Notifications**: Alert users when DNS zones change
+5. **Dashboard**: User management interface
+
+## Database Schema (Supabase)
+- **users**: User accounts and preferences
+- **dns_zones**: Monitored DNS zones
+- **zone_checks**: Historical SOA record checks
+- **notifications**: Sent notification logs
+
+## Development Guidelines
+- Use TypeScript strictly with proper type definitions
+- Follow Next.js App Router conventions
+- Implement proper error handling and loading states
+- Use shadcn/ui components for consistent UI
+- Write clean, documented code
+- Implement proper security measures for DNS operations
+- Use environment variables for sensitive configuration
+- Always use Supabase MCP tools for database operations
+- Deploy Edge Functions immediately when created
+- Update context files for new features
+- **Always commit changes with descriptive messages**
+
+## Security Considerations
+- Validate DNS zone inputs
+- Implement rate limiting for API endpoints
+- Secure email handling
+- Protect against DNS enumeration attacks
+- Implement proper authentication and authorization
+- Use Row Level Security (RLS) for data protection
+
+## Performance
+- Optimize DNS queries to avoid overwhelming DNS servers
+- Implement caching for DNS responses
+- Use efficient background job processing
+- Optimize database queries
+- Use Supabase Edge Functions for serverless scaling
+
+## Testing
+- Unit tests for utility functions
+- Integration tests for API endpoints
+- E2E tests for critical user flows
+- DNS monitoring accuracy tests
+- Edge Function testing via Supabase logs
+
+## File Organization Rules
+- **Documentation**: Always in docs/ folder
+- **Context**: Always in context/ folder  
+- **Code**: Follow Next.js App Router structure
+- **Database**: Use Supabase MCP tools only
+- **Functions**: Deploy to Supabase Edge Functions
+- **Version Control**: Always commit changes with GitHub MCP
+- **Never**: Write direct SQL files or use external cron services
