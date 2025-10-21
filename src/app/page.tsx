@@ -1,9 +1,75 @@
+"use client";
+
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Shield, Eye, AlertTriangle, Mail } from "lucide-react";
+import { Shield, Eye, AlertTriangle, Mail, LogIn } from "lucide-react";
 import RegistrationForm from "@/components/forms/registration-form";
+import LoginForm from "@/components/forms/login-form";
+import UserDashboard from "@/components/user-dashboard";
 import ErrorBoundary from "@/components/error-boundary";
 
 export default function Home() {
+  const [currentView, setCurrentView] = useState<"home" | "login" | "dashboard">("home");
+  const [dashboardData, setDashboardData] = useState<any>(null);
+
+  const handleLoginSuccess = (data: any) => {
+    setDashboardData(data);
+    setCurrentView("dashboard");
+  };
+
+  const handleZoneRemoved = (zoneId: string) => {
+    if (dashboardData) {
+      setDashboardData({
+        ...dashboardData,
+        allZones: dashboardData.allZones.filter((zone: any) => zone.id !== zoneId),
+        zoneHistory: dashboardData.zoneHistory.filter((change: any) => change.zone_id !== zoneId)
+      });
+    }
+  };
+
+  // Show dashboard if user is logged in
+  if (currentView === "dashboard" && dashboardData) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <UserDashboard 
+          data={dashboardData} 
+          onZoneRemoved={handleZoneRemoved}
+          onBack={() => setCurrentView("home")}
+        />
+      </div>
+    );
+  }
+
+  // Show login form
+  if (currentView === "login") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <header className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Shield className="h-8 w-8 text-blue-600" />
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">DNSWatcher</h1>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => setCurrentView("home")}
+            >
+              Back to Home
+            </Button>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-12">
+          <div className="max-w-md mx-auto">
+            <ErrorBoundary>
+              <LoginForm onSuccess={handleLoginSuccess} />
+            </ErrorBoundary>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Show home page
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
@@ -13,7 +79,16 @@ export default function Home() {
             <Shield className="h-8 w-8 text-blue-600" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">DNSWatcher</h1>
           </div>
-          <Button variant="outline">Sign In</Button>
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setCurrentView("login")}
+              className="flex items-center space-x-2"
+            >
+              <LogIn className="h-4 w-4" />
+              <span>Sign In</span>
+            </Button>
+          </div>
         </div>
       </header>
 

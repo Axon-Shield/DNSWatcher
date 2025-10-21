@@ -82,6 +82,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check zone limits for free users
+    if (existingUser) {
+      const { data: userData, error: userDataError } = await supabase
+        .from("users")
+        .select("subscription_tier, max_zones")
+        .eq("id", userId)
+        .single();
+
+      if (userDataError) {
+        console.error("Error fetching user data:", userDataError);
+        return NextResponse.json(
+          { message: "Failed to check user limits" },
+          { status: 500 }
+        );
+      }
+
+      // Count active zones for this user
+      const { count: activeZoneCount, error: countError } = await supabase
+        .from("dns_zones")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("is_active", true);
+
+      if (countError) {
+        console.error("Error counting active zones:", countError);
+        return NextResponse.json(
+          { message: "Failed to check zone limits" },
+          { status: 500 }
+        );
+      }
+
+      if (activeZoneCount >= userData.max_zones) {
+        return NextResponse.json(
+          { 
+            message: `You have reached your limit of ${userData.max_zones} DNS zone${userData.max_zones > 1 ? 's' : ''}. ${userData.subscription_tier === 'free' ? 'Upgrade to Pro for unlimited monitoring.' : 'Please contact support.'}`,
+            upgradeRequired: userData.subscription_tier === 'free'
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Create DNS zone
     const { data: newZone, error: newZoneError } = await supabase
       .from("dns_zones")
