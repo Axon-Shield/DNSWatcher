@@ -3,6 +3,13 @@
 ## Project Description
 DNSWatcher is a proof-of-concept web application for DNS security monitoring. It's designed to help users monitor their DNS zones for unauthorized changes and receive instant notifications when SOA records are modified.
 
+## Repository Information
+- **Organization**: Axon-Shield
+- **Repository**: DNSWatcher
+- **URL**: https://github.com/Axon-Shield/DNSWatcher
+- **Status**: ✅ Fully deployed and committed to GitHub
+- **Branch**: main (production-ready)
+
 ## Core Functionality
 - **DNS Zone Registration**: Users can register email addresses and DNS zones for monitoring
 - **Automated Monitoring**: Background task checks SOA records every 5 minutes
@@ -18,6 +25,7 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - **Database**: Supabase PostgreSQL with Row Level Security
 - **Automation**: pg_cron for scheduled tasks
 - **Email**: Supabase Edge Functions with SMTP integration
+- **Version Control**: GitHub MCP integration
 
 ## Architecture
 - **Brochureware Homepage**: Educational content about DNS security
@@ -39,6 +47,9 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - ✅ Cron jobs configured (every 5 minutes)
 - ✅ Frontend application built and functional
 - ✅ Row Level Security implemented
+- ✅ Complete application committed to GitHub
+- ✅ GitHub MCP integration configured
+- ✅ Context-aware development rules established
 - ⏳ Email service ready for SMTP integration
 
 ## Key Files
@@ -48,6 +59,14 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - `src/app/api/cron/dns-monitor/route.ts` - Cron job proxy
 - `docs/SUPABASE_SETUP.md` - Complete setup guide
 - `context/` - AI context files for development
+- `.cursorrules` - Context-aware development rules
+
+## GitHub Integration
+- **Repository**: https://github.com/Axon-Shield/DNSWatcher
+- **Commits**: 7 commits with conventional commit messages
+- **Branch Strategy**: main branch for production
+- **MCP Integration**: Automatic commits and pull requests
+- **Documentation**: Complete setup and development guides
 
 ## Future Enhancements
 - User authentication and dashboard
@@ -56,3 +75,10 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - API rate limiting
 - Advanced security features
 - Monitoring analytics and reporting
+
+## Development Workflow
+- **Context-Aware**: Automatic tool selection based on feature type
+- **GitHub MCP**: Automatic commits with descriptive messages
+- **Supabase MCP**: Database operations and Edge Function deployment
+- **Conventional Commits**: Standardized commit message format
+- **Documentation**: Always updated with new features
