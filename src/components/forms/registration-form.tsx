@@ -28,6 +28,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const [verificationStep, setVerificationStep] = useState<"form" | "email-sent" | "verified">("form");
   const [userEmail, setUserEmail] = useState<string>("");
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);
+  const [isReactivation, setIsReactivation] = useState(false);
 
   const {
     register,
@@ -58,6 +59,8 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
       const result = await response.json();
       console.log("Registration successful:", result);
+      
+      setIsReactivation(result.isReactivation || false);
       
       if (result.emailConfirmationRequired) {
         setUserEmail(data.email);
@@ -115,9 +118,14 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           <div className="flex justify-center mb-4">
             <CheckCircle className="h-16 w-16 text-green-600" />
           </div>
-          <CardTitle className="text-green-600">Registration Complete!</CardTitle>
+          <CardTitle className="text-green-600">
+            {isReactivation ? "Zone Re-enabled!" : "Registration Complete!"}
+          </CardTitle>
           <CardDescription>
-            Your email has been verified and your DNS zone is now being monitored. You&apos;ll receive email notifications when changes are detected.
+            {isReactivation 
+              ? "Your DNS zone has been re-enabled for monitoring. You'll receive email notifications when changes are detected."
+              : "Your email has been verified and your DNS zone is now being monitored. You'll receive email notifications when changes are detected."
+            }
           </CardDescription>
         </CardHeader>
       </Card>
