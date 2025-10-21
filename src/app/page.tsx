@@ -117,10 +117,10 @@ export default function Home() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
             <Eye className="h-12 w-12 text-blue-600 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Real-time Monitoring</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Continuous monitoring of your DNS zones with checks every 5 minutes
-              to detect unauthorized changes immediately.
-            </p>
+              <p className="text-gray-600 dark:text-gray-300">
+                Continuous monitoring of your DNS zones with checks every minute
+                to detect unauthorized changes immediately.
+              </p>
           </div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
             <AlertTriangle className="h-12 w-12 text-orange-600 mb-4" />
