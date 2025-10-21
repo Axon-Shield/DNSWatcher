@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createServiceClient } from "@/lib/supabase-service";
 import { z } from "zod";
 
 interface SOARecordData {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, dnsZone } = registrationSchema.parse(body);
 
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     // Create or get user
     const { data: existingUser, error: userError } = await supabase
@@ -35,10 +35,16 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       userId = existingUser.id;
     } else {
+      // Generate confirmation token
+      const confirmationToken = crypto.randomUUID();
+      
       const { data: newUser, error: newUserError } = await supabase
         .from("users")
         .insert({
           email,
+          email_confirmed: false,
+          confirmation_token: confirmationToken,
+          confirmation_sent_at: new Date().toISOString(),
           notification_preferences: {
             email_enabled: true,
             frequency: "immediate",
@@ -56,6 +62,9 @@ export async function POST(request: NextRequest) {
       }
 
       userId = newUser.id;
+      
+      // TODO: Send confirmation email here
+      console.log(`Confirmation email should be sent to ${email} with token: ${confirmationToken}`);
     }
 
     // Check if zone already exists for this user
@@ -127,8 +136,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      message: "DNS zone successfully added to monitoring",
+      message: "DNS zone successfully added to monitoring. Please check your email to confirm your registration.",
       zoneId: newZone.id,
+      emailConfirmationRequired: !existingUser,
     });
 
   } catch (error) {
