@@ -1,4 +1,4 @@
-# GitHub MCP Integration Context
+# Git Command Line Integration Context
 
 ## Repository Information
 - **Organization**: Axon-Shield
@@ -6,10 +6,28 @@
 - **URL**: https://github.com/Axon-Shield/DNSWatcher
 - **Status**: ✅ Fully deployed and operational
 - **Branch**: main (production-ready)
-- **Commits**: 8 commits with conventional commit messages
+- **Commits**: 13 commits with conventional commit messages
 - **Access**: Fine-grained permissions configured
 
-## Available GitHub MCP Tools
+## Git Command Line Usage (PRIMARY)
+
+### Basic Git Operations
+- `git add .` - Stage all changes
+- `git commit -m "message"` - Commit with conventional message
+- `git push origin main` - Push to GitHub repository
+- `git status` - Check repository status
+- `git log --oneline` - View commit history
+- `git pull origin main` - Pull latest changes
+
+### Commit Workflow
+**For every feature implementation**:
+1. **Implement the feature** (frontend/backend/database)
+2. **Test the implementation**
+3. **Stage changes**: `git add .`
+4. **Commit with descriptive message**: `git commit -m "feat(ui): add new component"`
+5. **Push to GitHub**: `git push origin main`
+
+## GitHub MCP Tools (ADVANCED OPERATIONS ONLY)
 
 ### Repository Management
 - `mcp_github_create_repository` - Create new repositories
@@ -17,7 +35,6 @@
 - `mcp_github_get_file_contents` - Read file contents from GitHub
 - `mcp_github_create_or_update_file` - Create/update files in GitHub
 - `mcp_github_delete_file` - Delete files from GitHub
-- `mcp_github_push_files` - Push multiple files in single commit
 
 ### Branch Management
 - `mcp_github_create_branch` - Create new branches
@@ -66,14 +83,6 @@
 - `mcp_github_get_teams` - Get user's teams
 - `mcp_github_get_team_members` - Get team members
 
-## DNSWatcher GitHub Integration Patterns
-
-### Automatic Commit Patterns
-**For every feature implementation**:
-1. **Implement the feature** (frontend/backend/database)
-2. **Test the implementation**
-3. **Commit with descriptive message** using `mcp_github_push_files`
-
 ### Commit Message Conventions
 - **feat(ui)**: Frontend UI components and pages
 - **feat(api)**: Backend API endpoints and Edge Functions
@@ -95,18 +104,17 @@
 
 ### Pull Request Workflow
 1. **Create feature branch** with `mcp_github_create_branch`
-2. **Implement feature** with commits
+2. **Implement feature** with git commits
 3. **Create pull request** with `mcp_github_create_pull_request`
 4. **Review and merge** with `mcp_github_merge_pull_request`
 
 ### File Management
-- **Always use `mcp_github_push_files`** for committing changes
-- **Use `mcp_github_create_or_update_file`** for single file updates
-- **Use `mcp_github_delete_file`** for removing files
-- **Use `mcp_github_get_file_contents`** for reading files
+- **Use git command line** for committing changes (`git add .`, `git commit -m "message"`, `git push`)
+- **Use GitHub MCP** only for advanced operations (pull requests, issues, searches)
+- **Use local read_file** for reading files, NOT GitHub MCP
 
 ### Issue Tracking
-- **Create issues** for bugs and feature requests
+- **Create issues** for bugs and feature requests using GitHub MCP
 - **Link commits** to issues in commit messages
 - **Use labels** for categorization
 - **Close issues** automatically with commit messages
@@ -236,9 +244,9 @@
 
 ## Current Status
 - ✅ **Repository Created**: Axon-Shield/DNSWatcher
-- ✅ **Initial Commits**: 8 commits with proper messages
+- ✅ **Initial Commits**: 13 commits with proper messages
 - ✅ **Documentation**: Complete setup and development guides
 - ✅ **Context Files**: AI understanding files created
 - ✅ **Development Rules**: Context-aware .cursorrules configured
-- ✅ **MCP Integration**: GitHub MCP fully operational
+- ✅ **Git Integration**: Git command line for commits, GitHub MCP for advanced operations
 - ✅ **Ready for Development**: All systems operational

@@ -52,12 +52,12 @@ docs/                    # Documentation files
 context/                 # Context files for AI understanding
 ```
 
-## CRITICAL: Automatic GitHub Commit Rules
+## CRITICAL: Automatic Git Commit Rules
 
 ### MANDATORY COMMIT BEHAVIOR
 **When ANY code changes are made and accepted by the user, the LLM MUST:**
 
-1. **ALWAYS commit changes immediately** using `mcp_github_push_files`
+1. **ALWAYS commit changes immediately** using `run_terminal_cmd` with git commands
 2. **Use descriptive conventional commit messages** following the patterns below
 3. **Never leave changes uncommitted** - every code change must be pushed to GitHub
 4. **Update context files** if documentation needs updating
@@ -72,6 +72,12 @@ context/                 # Context files for AI understanding
 - ✅ Configuration files are modified
 - ✅ Dependencies are added or updated
 - ✅ Any file is created, modified, or deleted
+
+### GIT COMMAND PATTERNS (MANDATORY)
+**Use these git commands via `run_terminal_cmd`:**
+- `git add .` - Stage all changes
+- `git commit -m "feat(ui): add new component"` - Commit with conventional message
+- `git push origin main` - Push to GitHub repository
 
 ### COMMIT MESSAGE PATTERNS (MANDATORY)
 - **Frontend**: `feat(ui): add new component` or `fix(ui): resolve styling issue`
@@ -92,13 +98,14 @@ context/                 # Context files for AI understanding
 - `glob_file_search` tool for file searches
 - **NEVER use GitHub MCP for reading local files**
 
-### GitHub MCP Usage (COMMITS ONLY)
-**Use GitHub MCP tools ONLY for:**
-- `mcp_github_push_files` - Committing changes
-- `mcp_github_create_or_update_file` - Updating single files
-- `mcp_github_delete_file` - Deleting files
+### GitHub MCP Usage (ADVANCED OPERATIONS ONLY)
+**Use GitHub MCP tools ONLY for operations NOT available via git command line:**
 - `mcp_github_create_pull_request` - Creating pull requests
-- **NOT for reading local file contents**
+- `mcp_github_create_issue` - Creating issues
+- `mcp_github_search_code` - Searching code across repositories
+- `mcp_github_list_commits` - Listing commits with advanced filtering
+- `mcp_github_get_commit` - Getting detailed commit information
+- **NOT for basic commits/pushes** - Use git command line instead
 
 ## Context-Aware Development Rules
 
@@ -110,7 +117,7 @@ context/                 # Context files for AI understanding
 3. Use pg_cron for scheduled tasks
 4. Deploy functions immediately with mcp_supabase_deploy_edge_function
 5. Update context files in context/ folder
-6. **MANDATORY**: Use mcp_github_push_files with descriptive commit message
+6. **MANDATORY**: Use git commands via `run_terminal_cmd` with descriptive commit message
 
 ### Frontend/UI Features  
 **Keywords**: "frontend", "UI", "component", "page", "form", "styling", "react"
@@ -120,7 +127,7 @@ context/                 # Context files for AI understanding
 3. Use Tailwind CSS for styling
 4. Follow App Router patterns
 5. Update context files in context/ folder
-6. **MANDATORY**: Use mcp_github_push_files with descriptive commit message
+6. **MANDATORY**: Use git commands via `run_terminal_cmd` with descriptive commit message
 
 ### Database/Schema Changes
 **Keywords**: "database", "schema", "table", "migration", "RLS", "sql"
@@ -130,7 +137,7 @@ context/                 # Context files for AI understanding
 3. Always enable RLS on new tables
 4. Create proper indexes for performance
 5. Update context files in context/ folder
-6. **MANDATORY**: Use mcp_github_push_files with descriptive commit message
+6. **MANDATORY**: Use git commands via `run_terminal_cmd` with descriptive commit message
 
 ### DNS/Monitoring Features
 **Keywords**: "DNS", "monitoring", "SOA", "alert", "notification", "zone"
@@ -140,7 +147,7 @@ context/                 # Context files for AI understanding
 3. Update monitoring context
 4. Test with real DNS queries
 5. Update context files in context/ folder
-6. **MANDATORY**: Use mcp_github_push_files with descriptive commit message
+6. **MANDATORY**: Use git commands via `run_terminal_cmd` with descriptive commit message
 
 ### Email/Notification Features
 **Keywords**: "email", "notification", "alert", "SMTP", "send"
@@ -150,14 +157,14 @@ context/                 # Context files for AI understanding
 3. Test email delivery
 4. Update notification context
 5. Update context files in context/ folder
-6. **MANDATORY**: Use mcp_github_push_files with descriptive commit message
+6. **MANDATORY**: Use git commands via `run_terminal_cmd` with descriptive commit message
 
-### GitHub Integration Rules (CRITICAL)
+### Git Integration Rules (CRITICAL)
 **Keywords**: "commit", "git", "version control", "push", "pull request"
 **Auto-actions**:
 1. **MANDATORY**: Always commit changes after implementing features
 2. **MANDATORY**: Use descriptive commit messages following conventional commits
-3. **MANDATORY**: Use mcp_github_push_files for ALL commits
+3. **MANDATORY**: Use git commands via `run_terminal_cmd` for ALL commits
 4. **MANDATORY**: Never leave changes uncommitted
 5. **MANDATORY**: Update context files when documentation changes
 6. **MANDATORY**: Test changes before committing when possible
@@ -168,7 +175,7 @@ context/                 # Context files for AI understanding
 1. Update relevant documentation files
 2. Update context files in context/ folder
 3. Ensure accuracy of all information
-4. **MANDATORY**: Use mcp_github_push_files with `docs:` prefix
+4. **MANDATORY**: Use git commands via `run_terminal_cmd` with `docs:` prefix
 5. **MANDATORY**: Commit documentation changes immediately
 
 ## Supabase Integration Details
@@ -233,7 +240,7 @@ context/                 # Context files for AI understanding
 - **Code**: Follow Next.js App Router structure
 - **Database**: Use Supabase MCP tools only
 - **Functions**: Deploy to Supabase Edge Functions
-- **Version Control**: Always commit changes with GitHub MCP
+- **Version Control**: Always commit changes with git command line
 - **File Reading**: Use local read_file tool, NOT GitHub MCP
 - **Never**: Write direct SQL files or use external cron services
 
@@ -250,9 +257,9 @@ context/                 # Context files for AI understanding
 
 ## Development Workflow
 - **Context-Aware**: Automatic tool selection based on feature type
-- **GitHub MCP**: Automatic commits with descriptive messages
+- **Git Command Line**: Automatic commits with descriptive messages
 - **Supabase MCP**: Database operations and Edge Function deployment
 - **Conventional Commits**: Standardized commit message format
 - **Documentation**: Always updated with new features
 - **MANDATORY COMMITS**: Every code change must be committed immediately
-- **LOCAL FILE ACCESS**: Use read_file for viewing files, GitHub MCP only for commits
+- **LOCAL FILE ACCESS**: Use read_file for viewing files, git command line for commits
