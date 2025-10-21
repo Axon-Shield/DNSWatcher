@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: userId,
         zone_name: dnsZone,
-        is_active: true,
+        is_active: !existingUser ? false : true, // Only active if user already exists (already verified)
       })
       .select()
       .single();
