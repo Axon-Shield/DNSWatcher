@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Shield, Eye, AlertTriangle, Mail } from "lucide-react";
 import RegistrationForm from "@/components/forms/registration-form";
+import ErrorBoundary from "@/components/error-boundary";
 
 export default function Home() {
   return (
@@ -66,7 +67,9 @@ export default function Home() {
 
         {/* Registration Form */}
         <div className="max-w-2xl mx-auto">
-          <RegistrationForm />
+          <ErrorBoundary>
+            <RegistrationForm />
+          </ErrorBoundary>
         </div>
       </main>
 

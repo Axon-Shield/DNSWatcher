@@ -49,7 +49,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ message: "Network error" }));
         throw new Error(errorData.message || "Registration failed");
       }
 
@@ -64,7 +64,11 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       }
     } catch (err) {
       console.error("Registration error:", err);
-      setError(err instanceof Error ? err.message : "Registration failed");
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError(err instanceof Error ? err.message : "Registration failed");
+      }
     } finally {
       setIsSubmitting(false);
     }

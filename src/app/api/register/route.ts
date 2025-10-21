@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-client";
+import { createClient } from "@/lib/supabase-server";
 import { z } from "zod";
 
 interface SOARecordData {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, dnsZone } = registrationSchema.parse(body);
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Create or get user
     const { data: existingUser, error: userError } = await supabase
