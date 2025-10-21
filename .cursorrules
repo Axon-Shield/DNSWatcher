@@ -212,6 +212,118 @@ context/                 # Context files for AI understanding
 - **MANDATORY**: Always commit changes with descriptive messages immediately
 - **PREFER LOCAL FILE ACCESS**: Use read_file instead of GitHub MCP for viewing files
 
+## Frontend Debugging & Testing Guidelines
+
+### Browser Debugging Setup
+When testing the application locally, always use Edge browser with remote debugging enabled:
+
+```powershell
+# Start Edge with remote debugging
+Start-Process "msedge.exe" -ArgumentList "--remote-debugging-port=9222", "http://localhost:3000"
+
+# Verify debugging port is active
+netstat -ano | findstr :9222
+```
+
+### JavaScript Log Retrieval Commands
+Use these PowerShell commands to retrieve browser logs and debug information:
+
+#### 1. Get Browser Tabs and Debug Info
+```powershell
+# Get all browser tabs with debugging info
+Invoke-RestMethod -Uri "http://localhost:9222/json" | ConvertTo-Json -Depth 3
+```
+
+#### 2. Test Application Status
+```powershell
+# Test if application is running
+try { 
+    $response = Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing
+    Write-Host "Status: $($response.StatusCode) - Content Length: $($response.Content.Length)"
+} catch { 
+    Write-Host "Error: $($_.Exception.Message)" 
+}
+```
+
+#### 3. Test API Endpoints
+```powershell
+# Test registration API
+$body = @{email="test@example.com"; dnsZone="example.com"} | ConvertTo-Json
+try { 
+    $response = Invoke-WebRequest -Uri http://localhost:3000/api/register -Method POST -Body $body -ContentType "application/json" -UseBasicParsing
+    Write-Host "API Status: $($response.StatusCode)"
+    Write-Host "Response: $($response.Content)"
+} catch { 
+    Write-Host "API Error: $($_.Exception.Message)"
+}
+```
+
+#### 4. Check CSS and Static Assets
+```powershell
+# Test CSS loading
+try { 
+    $response = Invoke-WebRequest -Uri "http://localhost:3000/_next/static/css/app/layout.css" -UseBasicParsing
+    Write-Host "CSS Status: $($response.StatusCode)"
+} catch { 
+    Write-Host "CSS Error: $($_.Exception.Message)"
+}
+```
+
+#### 5. Monitor Development Server
+```powershell
+# Check if dev server is running
+netstat -ano | findstr :3000
+
+# Check Node.js processes
+Get-Process | Where-Object {$_.ProcessName -eq "node"}
+```
+
+### Common Frontend Issues & Solutions
+
+#### CSS 404 Errors
+- **Symptom**: CSS files returning 404 errors
+- **Solution**: 
+  ```powershell
+  # Clean and restart
+  taskkill /F /IM node.exe
+  Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
+  npm run dev
+  ```
+
+#### JavaScript Import Errors
+- **Symptom**: `twMerge is not defined` or similar import errors
+- **Solution**: Check `src/lib/utils.ts` for proper imports:
+  ```typescript
+  import { clsx, type ClassValue } from "clsx"
+  import { twMerge } from "tailwind-merge"
+  ```
+
+#### Database Schema Errors
+- **Symptom**: `Could not find column` errors
+- **Solution**: Use Supabase MCP to add missing columns:
+  ```sql
+  ALTER TABLE users ADD COLUMN notification_preferences JSONB DEFAULT '{"email_enabled": true, "frequency": "immediate"}'::jsonb;
+  ```
+
+### Testing Workflow
+1. **Start Development Server**: `npm run dev`
+2. **Start Browser with Debugging**: Use the Edge command above
+3. **Test Application**: Navigate to `http://localhost:3000`
+4. **Check Console Logs**: Use browser DevTools or PowerShell commands
+5. **Test Registration Form**: Submit test data and monitor API calls
+6. **Verify CSS Loading**: Check for 404 errors on static assets
+7. **Monitor Network Requests**: Use browser DevTools Network tab
+
+### Debugging Checklist
+- [ ] Development server running on port 3000
+- [ ] Edge browser with remote debugging on port 9222
+- [ ] Application loads with 200 status code
+- [ ] CSS files loading without 404 errors
+- [ ] JavaScript console free of errors
+- [ ] Registration form submits successfully
+- [ ] API endpoints return expected responses
+- [ ] Database schema matches application requirements
+
 ## Security Considerations
 - Validate DNS zone inputs
 - Implement rate limiting for API endpoints
