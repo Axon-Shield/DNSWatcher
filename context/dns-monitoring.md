@@ -16,18 +16,22 @@ example.com. 3600 IN SOA ns1.example.com. admin.example.com. (
 
 ## Monitoring Process
 1. **Initial Registration**: User provides email and DNS zone
-2. **Baseline Creation**: Fetch current SOA record as baseline
-3. **Scheduled Checks**: Every 5 minutes, check SOA serial number
-4. **Change Detection**: Compare current serial with previous check
-5. **Notification**: Send email alert if serial number changed
-6. **Historical Logging**: Record all checks for audit trail
+2. **Email Verification**: New users must verify email before monitoring starts
+3. **Baseline Creation**: Fetch current SOA record as baseline
+4. **Scheduled Checks**: Every 1 minute, check SOA serial number
+5. **Change Detection**: Compare current serial with previous check
+6. **Email Notification**: Send email alert via Resend if serial number changed
+7. **Historical Logging**: Record all checks for audit trail
+8. **Zone Management**: Users can remove and re-enable zones
 
 ## DNS Query Implementation
 ### Google DNS API
 - **Endpoint**: `https://dns.google/resolve?name={zone}&type=SOA`
 - **Advantages**: Reliable, fast, no rate limiting issues
-- **Response Format**: JSON with Answer array
+- **Response Format**: JSON with Answer and Authority arrays
 - **Parsing**: Split SOA data string into components
+- **Subdomain Support**: Checks both Answer (direct SOA) and Authority (inherited SOA) sections
+- **Implementation**: Handles subdomains that inherit SOA from parent domain
 
 ### Alternative: dns2 Library
 - **Package**: `dns2` for Node.js DNS queries
@@ -69,10 +73,12 @@ await supabase.from('zone_checks').insert({
 - **Error Disclosure**: Don't expose sensitive information
 
 ## Monitoring Schedule
-- **Frequency**: Every 5 minutes
-- **Implementation**: pg_cron job in Supabase
-- **Reliability**: Edge Functions for serverless execution
-- **Scaling**: Automatic scaling with Supabase
+- **Frequency**: Every 1 minute
+- **Implementation**: pg_cron job calling Next.js API route
+- **Reliability**: Next.js API routes with Supabase Edge Functions for email
+- **Scaling**: Automatic scaling with Supabase and Vercel
+- **Email Service**: Resend API integration
+- **Sender**: noreply@dnswatcher.axonshield.com
 
 ## Notification Triggers
 - **SOA Serial Change**: Primary trigger for notifications

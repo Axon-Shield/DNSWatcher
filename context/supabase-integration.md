@@ -7,10 +7,20 @@
 
 ## Database Schema
 ### Tables
-- **users**: User accounts and notification preferences
-- **dns_zones**: Monitored DNS zones with status
-- **zone_checks**: Historical SOA record checks
+- **users**: User accounts, email verification, subscription tiers
+  - `email_confirmed`: Boolean for email verification status
+  - `confirmation_token`: UUID for email verification
+  - `subscription_tier`: 'free' or 'pro' enum
+  - `max_zones`: Integer limit (1 for free, unlimited for pro)
+- **dns_zones**: Monitored DNS zones with soft delete support
+  - `is_active`: Boolean for soft delete functionality
+  - `activated_at`: Timestamp when zone was activated
+  - `deactivated_at`: Timestamp when zone was soft deleted
+- **zone_checks**: Historical SOA record checks with change tracking
+  - `previous_soa_data`: Text field for previous SOA record
+  - `change_details`: JSONB field for detailed change information
 - **notifications**: Sent notification logs
+  - `sent_at`: Timestamp when notification was sent
 
 ### Row Level Security (RLS)
 - All tables have RLS enabled
@@ -18,28 +28,26 @@
 - Proper policies implemented for data isolation
 
 ## Edge Functions
-### dns-monitor
-- **Purpose**: Check all active DNS zones for SOA changes
-- **Schedule**: Every 5 minutes via pg_cron
-- **Functionality**:
-  - Query Google DNS API for SOA records
-  - Compare with previous checks
-  - Record changes in database
-  - Trigger email notifications
-
 ### send-email
 - **Purpose**: Send email notifications for DNS changes
-- **Triggered by**: dns-monitor function when changes detected
+- **Triggered by**: DNS monitoring cron job when changes detected
+- **Email Service**: Resend API integration
+- **Sender**: noreply@dnswatcher.axonshield.com
 - **Functionality**:
-  - Get user notification preferences
-  - Create notification records
-  - Send emails via SMTP
-  - Update delivery status
+  - Send emails via Resend API
+  - Fallback to console logging if Resend not configured
+  - Handle HTML and text email formats
+  - Return delivery status and email ID
+
+### dns-monitor (Legacy)
+- **Status**: Replaced by Next.js API route for better cron integration
+- **Purpose**: Was used for DNS monitoring but now handled by `/api/cron/dns-monitor`
 
 ## Cron Jobs
-- **dns-monitor-job**: Runs every 5 minutes
-- **Function**: Calls dns-monitor Edge Function
+- **dns-monitor-job**: Runs every 1 minute
+- **Function**: Calls Next.js API route `/api/cron/dns-monitor`
 - **Configuration**: Set up in Supabase SQL Editor
+- **Implementation**: Uses `call_dns_monitor()` SQL function
 
 ## Client Configuration
 ### Browser Client (`supabase-client.ts`)
@@ -66,10 +74,16 @@
 - Supports both POST and GET for testing
 
 ## Environment Variables
+### Local Development (`.env.local`)
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://ipdbzqiypnvkgpgnsyva.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
+
+### Supabase Edge Function Secrets
+```env
+RESEND_API_KEY=your_resend_api_key
 ```
 
 ## Development Patterns

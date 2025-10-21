@@ -11,28 +11,33 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - **Branch**: main (production-ready)
 
 ## Core Functionality
-- **DNS Zone Registration**: Users can register email addresses and DNS zones for monitoring
-- **Automated Monitoring**: Background task checks SOA records every 5 minutes
+- **User Registration**: Email + DNS zone registration with email verification
+- **User Authentication**: Login system with email + DNS zone authentication
+- **Automated Monitoring**: Background task checks SOA records every 1 minute
 - **Change Detection**: Instant alerts when DNS zones change
-- **Email Notifications**: Real-time security alerts sent to users
+- **Email Notifications**: Real-time security alerts via Resend API
 - **Historical Tracking**: Complete audit trail of all DNS checks
+- **Zone Management**: Users can remove and re-enable zones
+- **Subscription Tiers**: Free (1 zone) and Pro (unlimited) tiers
 
 ## Technology Stack
 - **Frontend**: Next.js 14 with App Router, React 18, TypeScript
 - **UI Components**: shadcn/ui + Radix UI primitives
 - **Styling**: Tailwind CSS
-- **Backend**: Supabase Edge Functions (Deno)
+- **Backend**: Next.js API routes + Supabase Edge Functions
 - **Database**: Supabase PostgreSQL with Row Level Security
-- **Automation**: pg_cron for scheduled tasks
-- **Email**: Supabase Edge Functions with SMTP integration
+- **Automation**: pg_cron for scheduled tasks (every 1 minute)
+- **Email**: Resend API integration via Supabase Edge Functions
 - **Version Control**: GitHub MCP integration
 
 ## Architecture
-- **Brochureware Homepage**: Educational content about DNS security
-- **Registration System**: Simple email + DNS zone registration
-- **Background Monitoring**: Automated SOA record checking
-- **Notification System**: Email alerts for changes
-- **Dashboard**: User management interface (future)
+- **Multi-View Homepage**: Home, login, and dashboard views
+- **Registration System**: Email + DNS zone registration with verification
+- **User Authentication**: Login system with email + DNS zone
+- **User Dashboard**: Zone management and SOA history viewing
+- **Background Monitoring**: Automated SOA record checking every minute
+- **Notification System**: Email alerts via Resend API
+- **Zone Management**: Remove and re-enable zones functionality
 
 ## Security Features
 - Row Level Security (RLS) on all database tables
@@ -42,21 +47,30 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - DNS query validation and sanitization
 
 ## Development Status
-- ✅ Database schema created and secured
-- ✅ Edge Functions deployed and active
-- ✅ Cron jobs configured (every 5 minutes)
+- ✅ Database schema created and secured with RLS
+- ✅ Edge Functions deployed and active (send-email)
+- ✅ Cron jobs configured (every 1 minute)
 - ✅ Frontend application built and functional
-- ✅ Row Level Security implemented
+- ✅ User registration and authentication system
+- ✅ Email verification flow implemented
+- ✅ User dashboard with zone management
+- ✅ Zone reactivation functionality
+- ✅ Email notifications via Resend API
 - ✅ Complete application committed to GitHub
 - ✅ GitHub MCP integration configured
 - ✅ Context-aware development rules established
-- ⏳ Email service ready for SMTP integration
+- ✅ Context files updated with latest features
 
 ## Key Files
-- `src/app/page.tsx` - Brochureware homepage
-- `src/components/forms/registration-form.tsx` - User registration
-- `src/app/api/register/route.ts` - Registration API endpoint
-- `src/app/api/cron/dns-monitor/route.ts` - Cron job proxy
+- `src/app/page.tsx` - Multi-view homepage (home, login, dashboard)
+- `src/components/forms/registration-form.tsx` - User registration with email verification
+- `src/components/forms/login-form.tsx` - User authentication
+- `src/components/user-dashboard.tsx` - Zone management dashboard
+- `src/app/api/register/route.ts` - Registration API with zone reactivation
+- `src/app/api/login/route.ts` - Login API endpoint
+- `src/app/api/remove-zone/route.ts` - Zone removal API
+- `src/app/api/verify-email/route.ts` - Email verification API
+- `src/app/api/cron/dns-monitor/route.ts` - DNS monitoring cron job
 - `docs/SUPABASE_SETUP.md` - Complete setup guide
 - `context/` - AI context files for development
 - `.cursorrules` - Context-aware development rules

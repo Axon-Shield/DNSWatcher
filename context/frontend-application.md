@@ -5,10 +5,16 @@ DNSWatcher uses Next.js 14 with the App Router for modern React development patt
 
 ## Core Pages
 ### Homepage (`src/app/page.tsx`)
-- **Purpose**: Brochureware explaining DNS security
-- **Content**: Hero section, features grid, registration form
+- **Purpose**: Multi-view application with routing between home, login, and dashboard
+- **Content**: Hero section, features grid, registration form, login form, user dashboard
 - **Styling**: Tailwind CSS with gradient backgrounds
-- **Components**: Shield, Eye, AlertTriangle, Mail icons from Lucide React
+- **Components**: Shield, Eye, AlertTriangle, Mail, LogIn icons from Lucide React
+- **State Management**: `currentView` state for routing between views
+- **Features**: 
+  - Registration form with email verification flow
+  - Login form for existing users
+  - User dashboard with zone management
+  - Zone removal with proper state management
 
 ### Layout (`src/app/layout.tsx`)
 - **Font**: Inter font from Google Fonts
@@ -17,16 +23,41 @@ DNSWatcher uses Next.js 14 with the App Router for modern React development patt
 
 ## UI Components
 ### shadcn/ui Components
-- **Button**: Variants (default, outline, ghost, link) and sizes
+- **Button**: Variants (default, outline, ghost, link, destructive) and sizes
 - **Input**: Styled input with focus states
 - **Card**: Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter
 - **Label**: Accessible labels using Radix UI
+- **Badge**: Subscription tier display (Free/Pro)
+- **Alert**: Success messages and upgrade prompts
 
 ### Registration Form (`src/components/forms/registration-form.tsx`)
 - **Validation**: React Hook Form + Zod schema
-- **States**: Loading, success, error handling
+- **States**: Loading, success, error handling, email verification flow
 - **API Integration**: POST to `/api/register`
-- **User Feedback**: Success animation, error messages
+- **User Feedback**: Success animation, error messages, reactivation feedback
+- **Email Verification**: Multi-step flow with verification status checking
+- **Zone Reactivation**: Handles re-enabling soft-deleted zones
+- **Features**:
+  - Email confirmation required for new users
+  - Automatic reactivation for existing soft-deleted zones
+  - Different success messages for new vs reactivated zones
+
+### Login Form (`src/components/forms/login-form.tsx`)
+- **Purpose**: Authenticate existing users with email + DNS zone
+- **Validation**: React Hook Form + Zod schema
+- **API Integration**: POST to `/api/login`
+- **Features**: Returns user data, zones, and SOA history
+
+### User Dashboard (`src/components/user-dashboard.tsx`)
+- **Purpose**: Display user's monitoring dashboard
+- **Features**:
+  - User subscription tier display (Free/Pro)
+  - Current zone monitoring status
+  - SOA change history with timestamps
+  - Zone removal functionality
+  - Success feedback for zone operations
+- **State Management**: Loading states, success messages
+- **API Integration**: DELETE to `/api/remove-zone`
 
 ## Styling System
 ### Tailwind CSS Configuration
@@ -47,18 +78,49 @@ DNSWatcher uses Next.js 14 with the App Router for modern React development patt
 - **No Global State**: Simple local state management
 
 ## API Integration
-### Registration API
-- **Endpoint**: `/api/register`
+### Registration API (`/api/register`)
 - **Method**: POST
 - **Payload**: `{ email: string, dnsZone: string }`
-- **Response**: Success message with zone ID
-- **Error Handling**: Zod validation errors, server errors
+- **Response**: Success message with zone ID, reactivation status
+- **Features**:
+  - Email confirmation flow for new users
+  - Zone reactivation for soft-deleted zones
+  - Subscription tier enforcement (1 zone for free users)
+  - Initial SOA record fetching
+- **Error Handling**: Zod validation errors, server errors, zone limits
 
-### Cron API
-- **Endpoint**: `/api/cron/dns-monitor`
-- **Purpose**: Proxy to Supabase Edge Functions
+### Login API (`/api/login`)
+- **Method**: POST
+- **Payload**: `{ email: string, dnsZone: string }`
+- **Response**: User data, current zone, zone history, all zones
+- **Features**: Email verification check, zone validation
+
+### Remove Zone API (`/api/remove-zone`)
+- **Method**: DELETE
+- **Payload**: `{ email: string, zoneId: string }`
+- **Response**: Success message with zone name
+- **Features**: Soft delete (sets `is_active: false`)
+
+### Email Verification API (`/api/verify-email`)
+- **Method**: POST
+- **Payload**: `{ token: string, email: string }`
+- **Response**: Verification success/failure
+- **Features**: Activates zones after email confirmation
+
+### Verification Status API (`/api/check-verification-status`)
+- **Method**: GET
+- **Query**: `?email={email}`
+- **Response**: Verification status
+- **Features**: Check if user has verified email
+
+### Cron API (`/api/cron/dns-monitor`)
+- **Purpose**: DNS monitoring automation
 - **Authentication**: Service role key
-- **Testing**: GET requests for manual testing
+- **Features**: 
+  - Checks all active zones every minute
+  - Detects SOA changes
+  - Sends email notifications
+  - Records zone checks
 
 ## TypeScript Integration
 ### Type Definitions (`src/types/database.ts`)
