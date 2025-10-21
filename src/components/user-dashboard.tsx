@@ -54,6 +54,7 @@ interface UserDashboardProps {
 
 export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashboardProps) {
   const [removingZone, setRemovingZone] = useState<string | null>(null);
+  const [removedZoneName, setRemovedZoneName] = useState<string | null>(null);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -79,6 +80,10 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         throw new Error(result.message || "Failed to remove zone");
       }
 
+      // Show success message
+      setRemovedZoneName(result.zoneName);
+      setTimeout(() => setRemovedZoneName(null), 3000);
+
       if (onZoneRemoved) {
         onZoneRemoved(zoneId);
       }
@@ -94,6 +99,16 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Success Message */}
+      {removedZoneName && (
+        <Alert className="border-green-200 bg-green-50">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            Successfully removed {removedZoneName} from monitoring.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

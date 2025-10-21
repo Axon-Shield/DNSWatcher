@@ -19,11 +19,31 @@ export default function Home() {
 
   const handleZoneRemoved = (zoneId: string) => {
     if (dashboardData) {
-      setDashboardData({
-        ...dashboardData,
-        allZones: dashboardData.allZones.filter((zone: any) => zone.id !== zoneId),
-        zoneHistory: dashboardData.zoneHistory.filter((change: any) => change.zone_id !== zoneId)
-      });
+      const updatedZones = dashboardData.allZones.filter((zone: any) => zone.id !== zoneId);
+      
+      // If no zones left, redirect to home
+      if (updatedZones.length === 0) {
+        setCurrentView("home");
+        setDashboardData(null);
+        return;
+      }
+      
+      // If the current zone was removed, switch to the first remaining zone
+      if (dashboardData.currentZone.id === zoneId) {
+        const newCurrentZone = updatedZones[0];
+        setDashboardData({
+          ...dashboardData,
+          currentZone: newCurrentZone,
+          allZones: updatedZones,
+          zoneHistory: [] // Clear history since we're switching zones
+        });
+      } else {
+        // Just remove the zone from the list
+        setDashboardData({
+          ...dashboardData,
+          allZones: updatedZones
+        });
+      }
     }
   };
 
