@@ -128,6 +128,9 @@ async function querySOARecord(zoneName: string) {
     const response = await fetch(`https://dns.google/resolve?name=${zoneName}&type=SOA`);
     const data = await response.json();
     
+    console.log(`DNS query response for ${zoneName}:`, JSON.stringify(data, null, 2));
+    
+    // Check Answer section first (for domains with their own SOA)
     if (data.Answer && data.Answer.length > 0) {
       const answer = data.Answer[0];
       const parts = answer.data.split(' ');
@@ -149,6 +152,29 @@ async function querySOARecord(zoneName: string) {
       };
     }
     
+    // Check Authority section (for subdomains that inherit SOA from parent)
+    if (data.Authority && data.Authority.length > 0) {
+      const authority = data.Authority[0];
+      const parts = authority.data.split(' ');
+      
+      return {
+        name: authority.name,
+        type: 'SOA',
+        class: 'IN',
+        ttl: authority.TTL,
+        data: {
+          primary: parts[0],
+          admin: parts[1],
+          serial: parseInt(parts[2]),
+          refresh: parseInt(parts[3]),
+          retry: parseInt(parts[4]),
+          expire: parseInt(parts[5]),
+          minimum: parseInt(parts[6])
+        }
+      };
+    }
+    
+    console.log(`No SOA record found for ${zoneName}`);
     return null;
   } catch (error) {
     console.error(`DNS query error for ${zoneName}:`, error);
