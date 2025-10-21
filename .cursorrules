@@ -215,11 +215,11 @@ context/                 # Context files for AI understanding
 ## Frontend Debugging & Testing Guidelines
 
 ### Browser Debugging Setup
-When testing the application locally, always use Edge browser with remote debugging enabled:
+When testing the application locally, always use Edge browser with a dedicated debugging profile:
 
 ```powershell
-# Start Edge with remote debugging
-Start-Process "msedge.exe" -ArgumentList "--remote-debugging-port=9222", "http://localhost:3000"
+# Create and start Edge with dedicated debugging profile
+Start-Process "msedge.exe" -ArgumentList "--user-data-dir=C:\Users\deanc\AppData\Local\Microsoft\Edge\User Data\DebugProfile", "--profile-directory=DebugProfile", "--remote-debugging-port=9222", "--new-window", "http://localhost:3000"
 
 # Verify debugging port is active
 netstat -ano | findstr :9222
