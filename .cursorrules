@@ -8,7 +8,7 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - **Repository**: DNSWatcher
 - **URL**: https://github.com/Axon-Shield/DNSWatcher
 - **Status**: ✅ Fully deployed and operational
-- **Commits**: 11 commits with conventional commit messages
+- **Commits**: 12 commits with conventional commit messages
 - **Branch**: main (production-ready)
 
 ## Tech Stack
@@ -82,6 +82,23 @@ context/                 # Context files for AI understanding
 - **Docs**: `docs: update setup guide` or `docs: add new context file`
 - **Refactor**: `refactor: clean up unused files` or `refactor: improve code structure`
 - **Chore**: `chore: update dependencies` or `chore: maintenance task`
+
+## File Access Rules
+
+### LOCAL FILE ACCESS (PREFERRED)
+**When viewing or reading file contents, ALWAYS use:**
+- `read_file` tool for local file access
+- `list_dir` tool for directory listings
+- `glob_file_search` tool for file searches
+- **NEVER use GitHub MCP for reading local files**
+
+### GitHub MCP Usage (COMMITS ONLY)
+**Use GitHub MCP tools ONLY for:**
+- `mcp_github_push_files` - Committing changes
+- `mcp_github_create_or_update_file` - Updating single files
+- `mcp_github_delete_file` - Deleting files
+- `mcp_github_create_pull_request` - Creating pull requests
+- **NOT for reading local file contents**
 
 ## Context-Aware Development Rules
 
@@ -186,6 +203,7 @@ context/                 # Context files for AI understanding
 - Deploy Edge Functions immediately when created
 - Update context files for new features
 - **MANDATORY**: Always commit changes with descriptive messages immediately
+- **PREFER LOCAL FILE ACCESS**: Use read_file instead of GitHub MCP for viewing files
 
 ## Security Considerations
 - Validate DNS zone inputs
@@ -216,6 +234,7 @@ context/                 # Context files for AI understanding
 - **Database**: Use Supabase MCP tools only
 - **Functions**: Deploy to Supabase Edge Functions
 - **Version Control**: Always commit changes with GitHub MCP
+- **File Reading**: Use local read_file tool, NOT GitHub MCP
 - **Never**: Write direct SQL files or use external cron services
 
 ## Current Status
@@ -236,3 +255,4 @@ context/                 # Context files for AI understanding
 - **Conventional Commits**: Standardized commit message format
 - **Documentation**: Always updated with new features
 - **MANDATORY COMMITS**: Every code change must be committed immediately
+- **LOCAL FILE ACCESS**: Use read_file for viewing files, GitHub MCP only for commits
