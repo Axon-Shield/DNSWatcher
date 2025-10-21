@@ -215,14 +215,17 @@ context/                 # Context files for AI understanding
 ## Frontend Debugging & Testing Guidelines
 
 ### Browser Debugging Setup
-When testing the application locally, always use Edge browser with a dedicated debugging profile:
+When testing the application locally, always use Edge browser with the correct debugging profile:
 
 ```powershell
-# Create and start Edge with dedicated debugging profile
-Start-Process "msedge.exe" -ArgumentList "--user-data-dir=C:\Users\deanc\AppData\Local\Microsoft\Edge\User Data\DebugProfile", "--profile-directory=DebugProfile", "--remote-debugging-port=9222", "--new-window", "http://localhost:3000"
+# Start Edge with Profile 4 and remote debugging enabled
+Start-Process "msedge.exe" -ArgumentList "--profile-directory=`"Profile 4`"", "--remote-debugging-port=9222", "--new-window", "http://localhost:3000"
 
 # Verify debugging port is active
 netstat -ano | findstr :9222
+
+# Check if DNSWatcher tab is loaded
+$tabs = Invoke-RestMethod -Uri "http://localhost:9222/json"; $dnsWatcherTab = $tabs | Where-Object {$_.url -like "*localhost:3000*"}; if($dnsWatcherTab) { Write-Host "✅ DNSWatcher tab found: $($dnsWatcherTab.title)" } else { Write-Host "❌ DNSWatcher tab not found" }
 ```
 
 ### JavaScript Log Retrieval Commands
@@ -269,13 +272,24 @@ try {
 }
 ```
 
-#### 5. Monitor Development Server
+#### 6. Troubleshoot API Issues
 ```powershell
-# Check if dev server is running
-netstat -ano | findstr :3000
+# Check for RLS policy violations
+Write-Host "Common API Issues:"
+Write-Host "1. RLS Policy Violations - Check Supabase policies"
+Write-Host "2. Invalid API Keys - Verify .env.local has correct keys"
+Write-Host "3. Service Role Key - Get from Supabase Dashboard > Settings > API"
 
-# Check Node.js processes
-Get-Process | Where-Object {$_.ProcessName -eq "node"}
+# Test API with detailed error logging
+$body = @{email="test@example.com"; dnsZone="example.com"} | ConvertTo-Json
+try { 
+    $response = Invoke-WebRequest -Uri http://localhost:3000/api/register -Method POST -Body $body -ContentType "application/json" -UseBasicParsing
+    Write-Host "✅ API Status: $($response.StatusCode)"
+    Write-Host "Response: $($response.Content)"
+} catch { 
+    Write-Host "❌ API Error: $($_.Exception.Message)"
+    Write-Host "Status Code: $($_.Exception.Response.StatusCode)"
+}
 ```
 
 ### Common Frontend Issues & Solutions
