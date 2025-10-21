@@ -39,15 +39,50 @@
   - Handle HTML and text email formats
   - Return delivery status and email ID
 
-### dns-monitor (Legacy)
-- **Status**: Replaced by Next.js API route for better cron integration
-- **Purpose**: Was used for DNS monitoring but now handled by `/api/cron/dns-monitor`
+## Edge Functions
+### send-email
+- **Purpose**: Send email notifications for DNS changes
+- **Triggered by**: DNS monitoring cron job when changes detected
+- **Email Service**: Resend API integration
+- **Sender**: noreply@dnswatcher.axonshield.com (hardcoded)
+- **Status**: ✅ **FULLY OPERATIONAL** - Successfully sending emails
+- **Functionality**:
+  - Send emails via Resend API
+  - Fallback to console logging if Resend not configured
+  - Handle HTML and text email formats
+  - Return delivery status and email ID
+  - Verified email delivery with ID: 85742c62-110c-4743-8b2c-689978e05d1e
+
+### dns-monitor
+- **Purpose**: Monitor DNS zones for SOA changes
+- **Status**: ✅ **FULLY OPERATIONAL** - Successfully detecting SOA changes
+- **Functionality**:
+  - Query Google DNS over HTTPS for SOA records
+  - Handle both Answer and Authority sections (subdomain support)
+  - Detect SOA serial number changes
+  - Record zone checks in database
+  - Send email notifications via send-email function
+  - Verified change detection: Serial 2386530407 → 2386530404
 
 ## Cron Jobs
-- **dns-monitor-job**: Runs every 1 minute
-- **Function**: Calls Next.js API route `/api/cron/dns-monitor`
-- **Configuration**: Set up in Supabase SQL Editor
-- **Implementation**: Uses `call_dns_monitor()` SQL function
+- **dns-monitor-job**: Runs every 1 minute (`*/1 * * * *`)
+- **Function**: Calls Supabase Edge Function `dns-monitor` via HTTP POST
+- **Authentication**: Uses anon key for Edge Function access
+- **Status**: ✅ **FULLY OPERATIONAL** - Successfully running every minute
+- **Configuration**: 
+  ```sql
+  SELECT cron.schedule(
+    'dns-monitor-job',
+    '*/1 * * * *',
+    $$
+    SELECT net.http_post(
+      url := 'https://ipdbzqiypnvkgpgnsyva.supabase.co/functions/v1/dns-monitor',
+      headers := '{"Content-Type": "application/json", "Authorization": "Bearer [anon_key]"}'::jsonb,
+      body := '{}'::jsonb
+    );
+    $$
+  );
+  ```
 
 ## Client Configuration
 ### Browser Client (`supabase-client.ts`)

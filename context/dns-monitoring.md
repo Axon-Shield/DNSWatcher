@@ -73,12 +73,14 @@ await supabase.from('zone_checks').insert({
 - **Error Disclosure**: Don't expose sensitive information
 
 ## Monitoring Schedule
-- **Frequency**: Every 1 minute
-- **Implementation**: pg_cron job calling Next.js API route
-- **Reliability**: Next.js API routes with Supabase Edge Functions for email
-- **Scaling**: Automatic scaling with Supabase and Vercel
+- **Frequency**: Every 1 minute (`*/1 * * * *`)
+- **Implementation**: pg_cron job calling Supabase Edge Function
+- **Cron Job**: `SELECT net.http_post(url := 'https://ipdbzqiypnvkgpgnsyva.supabase.co/functions/v1/dns-monitor', ...)`
+- **Authentication**: Uses anon key for Edge Function calls
+- **Reliability**: Supabase Edge Functions with automatic scaling
 - **Email Service**: Resend API integration
 - **Sender**: noreply@dnswatcher.axonshield.com
+- **Status**: ✅ **FULLY OPERATIONAL** - Successfully detecting SOA changes and sending emails
 
 ## Notification Triggers
 - **SOA Serial Change**: Primary trigger for notifications
@@ -99,9 +101,34 @@ await supabase.from('zone_checks').insert({
 - **API Integration**: Webhook notifications
 - **Dashboard**: Real-time monitoring interface
 
+## Verified Functionality ✅
+### SOA Change Detection Test Results
+- **Test Date**: 2025-10-21 11:50:40
+- **Zone**: test.axonshield.com
+- **Change Detected**: Serial 2386530407 → 2386530404
+- **Detection Time**: < 1 minute
+- **Database Record**: ✅ Zone check recorded with `is_change: true`
+- **Change Details**: ✅ "Serial changed from 2386530407 to 2386530404"
+
+### Email Notification Test Results
+- **Notification Created**: ✅ SOA change notification in database
+- **Email Sent**: ✅ Successfully sent via Resend API
+- **Email ID**: 85742c62-110c-4743-8b2c-689978e05d1e
+- **From Address**: noreply@dnswatcher.axonshield.com
+- **Delivery Time**: < 1 minute from detection
+- **Content**: Complete DNS security alert with all details
+
+### Cron Job Test Results
+- **Schedule**: ✅ Running every minute (`*/1 * * * *`)
+- **Edge Function Calls**: ✅ Successful HTTP POST requests
+- **Authentication**: ✅ Using anon key for Edge Function access
+- **DNS Queries**: ✅ Real-time Google DNS over HTTPS queries
+- **Subdomain Support**: ✅ Handles Authority section for subdomains
+
 ## Testing
 - **Unit Tests**: DNS query functions
 - **Integration Tests**: End-to-end monitoring flow
 - **Load Testing**: Multiple zones, high frequency
 - **Error Testing**: Network failures, invalid responses
 - **Security Testing**: Input validation, rate limiting
+- **Production Testing**: ✅ **VERIFIED** - Real SOA changes detected and emails sent
