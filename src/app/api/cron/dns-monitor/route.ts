@@ -287,7 +287,8 @@ async function sendEmail(to: string, subject: string, text: string, html: string
     if (!emailResponse.ok) {
       console.error('Failed to send email:', await emailResponse.text());
     } else {
-      console.log(`Email sent successfully to ${to}`);
+      const result = await emailResponse.json();
+      console.log(`Email sent successfully to ${to} from ${result.fromEmail || 'dnswatcher.axonshield.com'}`);
     }
   } catch (error) {
     console.error('Error sending email:', error);
