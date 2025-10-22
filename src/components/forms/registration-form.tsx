@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Loader2, Mail, RefreshCw } from "lucide-react";
+import PasswordSetup from "./password-setup";
 
 const registrationSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -25,7 +26,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [verificationStep, setVerificationStep] = useState<"form" | "email-sent" | "verified">("form");
+  const [verificationStep, setVerificationStep] = useState<"form" | "email-sent" | "verified" | "password-setup">("form");
   const [userEmail, setUserEmail] = useState<string>("");
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);
   const [isReactivation, setIsReactivation] = useState(false);
@@ -60,11 +61,9 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       const result = await response.json();
       console.log("Registration successful:", result);
       
-      setIsReactivation(result.isReactivation || false);
-      
-      if (result.emailConfirmationRequired) {
+      if (result.passwordSetupRequired) {
         setUserEmail(data.email);
-        setVerificationStep("email-sent");
+        setVerificationStep("password-setup");
       } else {
         setIsSuccess(true);
         reset();
@@ -94,12 +93,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       const data = await response.json();
       
       if (response.ok && data.verified) {
-        setVerificationStep("verified");
-        setIsSuccess(true);
-        
-        if (onSuccess) {
-          onSuccess();
-        }
+        setVerificationStep("password-setup");
       } else {
         setError("Email not yet verified. Please check your email and click the verification link.");
       }
@@ -111,6 +105,25 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     }
   };
 
+  const handlePasswordSet = () => {
+    setIsSuccess(true);
+    reset();
+    if (onSuccess) {
+      onSuccess();
+    }
+  };
+
+  // Show password setup step
+  if (verificationStep === "password-setup") {
+    return (
+      <PasswordSetup
+        email={userEmail}
+        onPasswordSet={handlePasswordSet}
+        onBack={() => setVerificationStep("email-sent")}
+      />
+    );
+  }
+
   if (isSuccess) {
     return (
       <Card className="w-full max-w-md mx-auto">
@@ -118,14 +131,9 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           <div className="flex justify-center mb-4">
             <CheckCircle className="h-16 w-16 text-green-600" />
           </div>
-          <CardTitle className="text-green-600">
-            {isReactivation ? "Zone Re-enabled!" : "Registration Complete!"}
-          </CardTitle>
+          <CardTitle className="text-green-600">Registration Complete!</CardTitle>
           <CardDescription>
-            {isReactivation 
-              ? "Your DNS zone has been re-enabled for monitoring. You'll receive email notifications when changes are detected."
-              : "Your email has been verified and your DNS zone is now being monitored. You'll receive email notifications when changes are detected."
-            }
+            Your DNS zone is now being monitored. You'll receive email notifications when changes are detected.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -142,7 +150,7 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           <CardTitle className="text-blue-600">Check Your Email</CardTitle>
           <CardDescription>
             We&apos;ve sent a verification link to <strong>{userEmail}</strong>. 
-            Please click the link in your email to verify your address and activate DNS monitoring.
+            Please click the link in your email to verify your address.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -241,6 +249,11 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
             )}
           </Button>
         </form>
+        
+        <div className="mt-6 text-center text-sm text-gray-600">
+          <p>Enter your email and DNS zone to start monitoring.</p>
+          <p>New users will be asked to set up a secure password.</p>
+        </div>
       </CardContent>
     </Card>
   );

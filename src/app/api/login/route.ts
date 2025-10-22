@@ -4,78 +4,52 @@ import { z } from "zod";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  dnsZone: z.string().min(1, "Please enter a DNS zone"),
+  password: z.string().min(1, "Please enter your password"),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, dnsZone } = loginSchema.parse(body);
+    const { email, password } = loginSchema.parse(body);
 
     const supabase = createServiceClient();
 
-    // Find user by email
+    // Authenticate user with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError || !authData.user) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: "Invalid email or password." 
+        },
+        { status: 401 }
+      );
+    }
+
+    // Get user data from our users table
     const { data: user, error: userError } = await supabase
       .from("users")
       .select("*")
       .eq("email", email)
+      .eq("email_confirmed", true)
+      .eq("password_set", true)
       .single();
 
     if (userError || !user) {
       return NextResponse.json(
         { 
           success: false, 
-          message: "No account found with this email address." 
+          message: "User account not found or not properly set up." 
         },
         { status: 404 }
       );
     }
 
-    // Check if email is verified
-    if (!user.email_confirmed) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: "Please verify your email address before accessing your account.",
-          emailConfirmationRequired: true
-        },
-        { status: 400 }
-      );
-    }
-
-    // Find the DNS zone for this user
-    const { data: zone, error: zoneError } = await supabase
-      .from("dns_zones")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("zone_name", dnsZone)
-      .eq("is_active", true)
-      .single();
-
-    if (zoneError || !zone) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: `No active monitoring found for ${dnsZone}. Please check the zone name or register it first.` 
-        },
-        { status: 404 }
-      );
-    }
-
-    // Get zone history (SOA changes)
-    const { data: zoneHistory, error: historyError } = await supabase
-      .from("zone_checks")
-      .select("*")
-      .eq("zone_id", zone.id)
-      .eq("is_change", true)
-      .order("checked_at", { ascending: false })
-      .limit(50); // Last 50 changes
-
-    if (historyError) {
-      console.error("Error fetching zone history:", historyError);
-    }
-
-    // Get all zones for this user
+    // Get all active zones for this user
     const { data: allZones, error: allZonesError } = await supabase
       .from("dns_zones")
       .select("*")
@@ -87,6 +61,32 @@ export async function POST(request: NextRequest) {
       console.error("Error fetching all zones:", allZonesError);
     }
 
+    if (!allZones || allZones.length === 0) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: "No DNS zones found for this account. Please register a zone first." 
+        },
+        { status: 404 }
+      );
+    }
+
+    // Use the first zone as the current zone
+    const currentZone = allZones[0];
+
+    // Get zone history (SOA changes) for the current zone
+    const { data: zoneHistory, error: historyError } = await supabase
+      .from("zone_checks")
+      .select("*")
+      .eq("zone_id", currentZone.id)
+      .eq("is_change", true)
+      .order("checked_at", { ascending: false })
+      .limit(50); // Last 50 changes
+
+    if (historyError) {
+      console.error("Error fetching zone history:", historyError);
+    }
+
     return NextResponse.json({
       success: true,
       user: {
@@ -96,10 +96,10 @@ export async function POST(request: NextRequest) {
         max_zones: user.max_zones,
       },
       currentZone: {
-        id: zone.id,
-        zone_name: zone.zone_name,
-        created_at: zone.created_at,
-        last_checked: zone.last_checked,
+        id: currentZone.id,
+        zone_name: currentZone.zone_name,
+        created_at: currentZone.created_at,
+        last_checked: currentZone.last_checked,
       },
       zoneHistory: zoneHistory || [],
       allZones: allZones || [],

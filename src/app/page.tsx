@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Shield, Eye, AlertTriangle, Mail, LogIn } from "lucide-react";
 import RegistrationForm from "@/components/forms/registration-form";
 import LoginForm from "@/components/forms/login-form";
+import ForgotPassword from "@/components/forms/forgot-password";
 import UserDashboard from "@/components/user-dashboard";
 import ErrorBoundary from "@/components/error-boundary";
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<"home" | "login" | "dashboard">("home");
+  const [currentView, setCurrentView] = useState<"home" | "login" | "forgot-password" | "dashboard">("home");
   const [dashboardData, setDashboardData] = useState<any>(null);
 
   const handleLoginSuccess = (data: any) => {
@@ -81,7 +82,39 @@ export default function Home() {
         <main className="container mx-auto px-4 py-12">
           <div className="max-w-md mx-auto">
             <ErrorBoundary>
-              <LoginForm onSuccess={handleLoginSuccess} />
+              <LoginForm 
+                onSuccess={handleLoginSuccess} 
+                onForgotPassword={() => setCurrentView("forgot-password")}
+              />
+            </ErrorBoundary>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Show forgot password form
+  if (currentView === "forgot-password") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <header className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Shield className="h-8 w-8 text-blue-600" />
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">DNSWatcher</h1>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => setCurrentView("login")}
+            >
+              Back to Sign In
+            </Button>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-12">
+          <div className="max-w-md mx-auto">
+            <ErrorBoundary>
+              <ForgotPassword onBack={() => setCurrentView("login")} />
             </ErrorBoundary>
           </div>
         </main>

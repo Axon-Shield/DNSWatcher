@@ -8,22 +8,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Eye, EyeOff, Lock } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  dnsZone: z.string().min(1, "Please enter a DNS zone"),
+  password: z.string().min(1, "Please enter your password"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 interface LoginFormProps {
   onSuccess?: (data: any) => void;
+  onForgotPassword?: () => void;
 }
 
-export default function LoginForm({ onSuccess }: LoginFormProps) {
+export default function LoginForm({ onSuccess, onForgotPassword }: LoginFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -67,10 +69,13 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
   return (
     <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Access Your Account</CardTitle>
+      <CardHeader className="text-center">
+        <div className="flex justify-center mb-4">
+          <Lock className="h-16 w-16 text-blue-600" />
+        </div>
+        <CardTitle>Sign In to Your Account</CardTitle>
         <CardDescription>
-          Enter your email and DNS zone to view your monitoring history.
+          Enter your email and password to access your DNS monitoring dashboard.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -89,15 +94,31 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dnsZone">DNS Zone</Label>
-            <Input
-              id="dnsZone"
-              type="text"
-              placeholder="example.com"
-              {...register("dnsZone")}
-            />
-            {errors.dnsZone && (
-              <p className="text-sm text-red-600">{errors.dnsZone.message}</p>
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                {...register("password")}
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            {errors.password && (
+              <p className="text-sm text-red-600">{errors.password.message}</p>
             )}
           </div>
 
@@ -108,16 +129,29 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing In...
-              </>
-            ) : (
-              "Sign In"
+          <div className="space-y-2">
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+            
+            {onForgotPassword && (
+              <Button
+                type="button"
+                variant="link"
+                className="w-full text-sm"
+                onClick={onForgotPassword}
+              >
+                Forgot your password?
+              </Button>
             )}
-          </Button>
+          </div>
         </form>
       </CardContent>
     </Card>

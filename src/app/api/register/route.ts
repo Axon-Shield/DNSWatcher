@@ -35,16 +35,12 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       userId = existingUser.id;
     } else {
-      // Generate confirmation token
-      const confirmationToken = crypto.randomUUID();
-      
       const { data: newUser, error: newUserError } = await supabase
         .from("users")
         .insert({
           email,
           email_confirmed: false,
-          confirmation_token: confirmationToken,
-          confirmation_sent_at: new Date().toISOString(),
+          password_set: false,
           notification_preferences: {
             email_enabled: true,
             frequency: "immediate",
@@ -62,170 +58,80 @@ export async function POST(request: NextRequest) {
       }
 
       userId = newUser.id;
-      
-      // TODO: Send confirmation email here
-      console.log(`Confirmation email should be sent to ${email} with token: ${confirmationToken}`);
     }
 
-    // Check if zone already exists for this user (active zones only)
-    const { data: existingActiveZone, error: activeZoneError } = await supabase
+    // Check if zone already exists for this user
+    const { data: existingZone, error: zoneError } = await supabase
       .from("dns_zones")
       .select("*")
       .eq("user_id", userId)
       .eq("zone_name", dnsZone)
-      .eq("is_active", true)
       .single();
 
-    if (existingActiveZone) {
+    if (existingZone) {
       return NextResponse.json(
         { message: "DNS zone is already being monitored for this email" },
         { status: 400 }
       );
     }
 
-    // Check if there's a soft-deleted zone we can re-enable
-    const { data: softDeletedZone, error: softDeletedError } = await supabase
+    // Create DNS zone
+    const { data: newZone, error: newZoneError } = await supabase
       .from("dns_zones")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("zone_name", dnsZone)
-      .eq("is_active", false)
+      .insert({
+        user_id: userId,
+        zone_name: dnsZone,
+        is_active: true,
+      })
+      .select()
       .single();
 
-    // Check zone limits for free users
-    if (existingUser) {
-      const { data: userData, error: userDataError } = await supabase
-        .from("users")
-        .select("subscription_tier, max_zones")
-        .eq("id", userId)
-        .single();
-
-      if (userDataError) {
-        console.error("Error fetching user data:", userDataError);
-        return NextResponse.json(
-          { message: "Failed to check user limits" },
-          { status: 500 }
-        );
-      }
-
-      // Count active zones for this user
-      const { count: activeZoneCount, error: countError } = await supabase
-        .from("dns_zones")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("is_active", true);
-
-      if (countError) {
-        console.error("Error counting active zones:", countError);
-        return NextResponse.json(
-          { message: "Failed to check zone limits" },
-          { status: 500 }
-        );
-      }
-
-      if (activeZoneCount >= userData.max_zones) {
-        return NextResponse.json(
-          { 
-            message: `You have reached your limit of ${userData.max_zones} DNS zone${userData.max_zones > 1 ? 's' : ''}. ${userData.subscription_tier === 'free' ? 'Upgrade to Pro for unlimited monitoring.' : 'Please contact support.'}`,
-            upgradeRequired: userData.subscription_tier === 'free'
-          },
-          { status: 400 }
-        );
-      }
+    if (newZoneError) {
+      console.error("Error creating DNS zone:", newZoneError);
+      return NextResponse.json(
+        { message: "Failed to create DNS zone" },
+        { status: 500 }
+      );
     }
 
-    let zoneId: string;
-    let isReactivation = false;
+    // Get initial SOA record for baseline using Google DNS API
+    try {
+      const dnsResponse = await fetch(`https://dns.google/resolve?name=${dnsZone}&type=SOA`);
+      const dnsData = await dnsResponse.json();
 
-    if (softDeletedZone) {
-      // Re-enable the soft-deleted zone
-      const { data: reactivatedZone, error: reactivateError } = await supabase
-        .from("dns_zones")
-        .update({
-          is_active: true,
-          activated_at: new Date().toISOString(),
-          deactivated_at: null
-        })
-        .eq("id", softDeletedZone.id)
-        .select()
-        .single();
+      if (dnsData.Answer && dnsData.Answer.length > 0) {
+        const answer = dnsData.Answer[0];
+        const parts = answer.data.split(' ');
 
-      if (reactivateError) {
-        console.error("Error reactivating DNS zone:", reactivateError);
-        return NextResponse.json(
-          { message: "Failed to reactivate DNS zone" },
-          { status: 500 }
-        );
+        const soaRecord = {
+          primary: parts[0],
+          admin: parts[1],
+          serial: parseInt(parts[2]),
+          refresh: parseInt(parts[3]),
+          retry: parseInt(parts[4]),
+          expire: parseInt(parts[5]),
+          minimum: parseInt(parts[6])
+        };
+
+        await supabase
+          .from("zone_checks")
+          .insert({
+            zone_id: newZone.id,
+            soa_serial: soaRecord.serial,
+            soa_record: JSON.stringify(soaRecord),
+            checked_at: new Date().toISOString(),
+            is_change: false,
+          });
       }
-
-      zoneId = reactivatedZone.id;
-      isReactivation = true;
-    } else {
-      // Create new DNS zone
-      const { data: newZone, error: newZoneError } = await supabase
-        .from("dns_zones")
-        .insert({
-          user_id: userId,
-          zone_name: dnsZone,
-          is_active: !existingUser ? false : true, // Only active if user already exists (already verified)
-        })
-        .select()
-        .single();
-
-      if (newZoneError) {
-        console.error("Error creating DNS zone:", newZoneError);
-        return NextResponse.json(
-          { message: "Failed to create DNS zone" },
-          { status: 500 }
-        );
-      }
-
-      zoneId = newZone.id;
-    }
-
-    // Get initial SOA record for baseline using Google DNS API (only for new zones)
-    if (!isReactivation) {
-      try {
-        const dnsResponse = await fetch(`https://dns.google/resolve?name=${dnsZone}&type=SOA`);
-        const dnsData = await dnsResponse.json();
-
-        if (dnsData.Answer && dnsData.Answer.length > 0) {
-          const answer = dnsData.Answer[0];
-          const parts = answer.data.split(' ');
-
-          const soaRecord = {
-            primary: parts[0],
-            admin: parts[1],
-            serial: parseInt(parts[2]),
-            refresh: parseInt(parts[3]),
-            retry: parseInt(parts[4]),
-            expire: parseInt(parts[5]),
-            minimum: parseInt(parts[6])
-          };
-
-          await supabase
-            .from("zone_checks")
-            .insert({
-              zone_id: zoneId,
-              soa_serial: soaRecord.serial,
-              soa_record: JSON.stringify(soaRecord),
-              checked_at: new Date().toISOString(),
-              is_change: false,
-            });
-        }
-      } catch (dnsError) {
-        console.error("Error fetching initial SOA record:", dnsError);
-        // Continue without initial SOA record - will be fetched on first check
-      }
+    } catch (dnsError) {
+      console.error("Error fetching initial SOA record:", dnsError);
+      // Continue without initial SOA record - will be fetched on first check
     }
 
     return NextResponse.json({
-      message: isReactivation 
-        ? "DNS zone has been re-enabled for monitoring." 
-        : "DNS zone successfully added to monitoring. Please check your email to confirm your registration.",
-      zoneId: zoneId,
-      emailConfirmationRequired: !existingUser && !isReactivation,
-      isReactivation: isReactivation,
+      message: "DNS zone successfully added to monitoring",
+      zoneId: newZone.id,
+      passwordSetupRequired: !existingUser, // New users need to set password
     });
 
   } catch (error) {
