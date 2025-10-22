@@ -19,12 +19,11 @@ export async function POST(request: NextRequest) {
       .from("users")
       .select("*")
       .eq("email", email)
-      .eq("password_set", false)
       .single();
 
     if (userError || !user) {
       return NextResponse.json(
-        { message: "User not found or password already set" },
+        { message: "User not found", error: userError?.message },
         { status: 404 }
       );
     }
@@ -36,10 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For now, we'll skip Supabase Auth admin calls and just update our user table
-    // The password will be handled by Supabase Auth during login
-
-  // Update user with password set flag
+    // Update user with password set flag
     const { error: updateError } = await supabase
       .from("users")
       .update({
@@ -74,9 +70,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    // Note: We're marking that the password has been set in our user table
-    // The actual password authentication will be handled by Supabase Auth during login
 
     return NextResponse.json({
       message: "Password set successfully and DNS zones activated",
