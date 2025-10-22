@@ -40,6 +40,35 @@ export async function POST(request: NextRequest) {
 
     console.log("Auth successful, looking up user:", email);
 
+    // Test the query step by step
+    console.log("Testing user lookup step by step...");
+    
+    // Step 1: Test basic user lookup
+    const { data: basicUsers, error: basicError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email);
+    
+    console.log("Basic user lookup:", { count: basicUsers?.length || 0, error: basicError?.message });
+    
+    // Step 2: Test with email_confirmed
+    const { data: confirmedUsers, error: confirmedError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email)
+      .eq("email_confirmed", true);
+    
+    console.log("Email confirmed lookup:", { count: confirmedUsers?.length || 0, error: confirmedError?.message });
+    
+    // Step 3: Test with password_set
+    const { data: passwordUsers, error: passwordError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email)
+      .eq("password_set", true);
+    
+    console.log("Password set lookup:", { count: passwordUsers?.length || 0, error: passwordError?.message });
+
     // Get user data from our users table
     const { data: users, error: userError } = await supabase
       .from("users")
