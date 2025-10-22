@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Loader2, Mail, RefreshCw } from "lucide-react";
 import PasswordSetup from "./password-setup";
+import EmailVerification from "./email-verification";
 
 const registrationSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -27,7 +28,7 @@ export default function RegistrationForm({ onSuccess, onRedirectToLogin }: Regis
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [verificationStep, setVerificationStep] = useState<"form" | "email-sent" | "verified" | "password-setup">("form");
+  const [verificationStep, setVerificationStep] = useState<"form" | "email-sent" | "verified" | "password-setup" | "email-verification">("form");
   const [userEmail, setUserEmail] = useState<string>("");
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);
   const [isReactivation, setIsReactivation] = useState(false);
@@ -123,13 +124,37 @@ export default function RegistrationForm({ onSuccess, onRedirectToLogin }: Regis
     }
   };
 
+  const handleEmailVerificationRequired = () => {
+    setVerificationStep("email-verification");
+  };
+
+  const handleEmailVerified = () => {
+    setIsSuccess(true);
+    reset();
+    if (onSuccess) {
+      onSuccess();
+    }
+  };
+
   // Show password setup step
   if (verificationStep === "password-setup") {
     return (
       <PasswordSetup
         email={userEmail}
         onPasswordSet={handlePasswordSet}
+        onEmailVerificationRequired={handleEmailVerificationRequired}
         onBack={() => setVerificationStep("email-sent")}
+      />
+    );
+  }
+
+  // Show email verification step
+  if (verificationStep === "email-verification") {
+    return (
+      <EmailVerification
+        email={userEmail}
+        onVerified={handleEmailVerified}
+        onBack={() => setVerificationStep("password-setup")}
       />
     );
   }

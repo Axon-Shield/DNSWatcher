@@ -73,28 +73,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Activate all inactive zones for this user
-    const { error: activateZonesError } = await supabase
-      .from("dns_zones")
-      .update({
-        is_active: true,
-        activated_at: new Date().toISOString(),
-        deactivated_at: null
-      })
-      .eq("user_id", user.id)
-      .eq("is_active", false);
-
-    if (activateZonesError) {
-      console.error("Error activating zones:", activateZonesError);
-      return NextResponse.json(
-        { message: "Failed to activate DNS zones" },
-        { status: 500 }
-      );
-    }
-
     return NextResponse.json({
-      message: "Password set successfully and DNS zones activated",
+      message: "Password set successfully. Please verify your email to activate DNS monitoring.",
       userId: user.id,
+      emailVerificationRequired: true,
     });
 
   } catch (error) {

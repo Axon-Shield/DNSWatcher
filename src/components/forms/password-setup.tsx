@@ -29,10 +29,11 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 interface PasswordSetupProps {
   email: string;
   onPasswordSet: () => void;
+  onEmailVerificationRequired: () => void;
   onBack?: () => void;
 }
 
-export default function PasswordSetup({ email, onPasswordSet, onBack }: PasswordSetupProps) {
+export default function PasswordSetup({ email, onPasswordSet, onEmailVerificationRequired, onBack }: PasswordSetupProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -71,8 +72,12 @@ export default function PasswordSetup({ email, onPasswordSet, onBack }: Password
         throw new Error(result.message || "Failed to set password");
       }
 
-      // Password set successfully
-      onPasswordSet();
+      // Check if email verification is required
+      if (result.emailVerificationRequired) {
+        onEmailVerificationRequired();
+      } else {
+        onPasswordSet();
+      }
     } catch (error) {
       console.error("Error setting password:", error);
       setError(error instanceof Error ? error.message : "Failed to set password");
