@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +13,12 @@ import {
   Crown, 
   AlertTriangle,
   CheckCircle,
-  Loader2
+  Loader2,
+  Filter,
+  TrendingUp
 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Dot } from 'recharts';
+import { format, subDays, subWeeks, subMonths, isWithinInterval } from 'date-fns';
 
 interface ZoneHistory {
   id: string;
@@ -52,13 +56,59 @@ interface UserDashboardProps {
   onBack?: () => void;
 }
 
+type TimeFilter = '24h' | '7d' | '30d' | 'all';
+
 export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashboardProps) {
   const [removingZone, setRemovingZone] = useState<string | null>(null);
   const [removedZoneName, setRemovedZoneName] = useState<string | null>(null);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('7d');
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
+
+  const formatDateShort = (dateString: string) => {
+    return format(new Date(dateString), 'MMM dd, HH:mm');
+  };
+
+  // Filter data based on time range
+  const filteredHistory = useMemo(() => {
+    if (timeFilter === 'all') return data.zoneHistory;
+    
+    const now = new Date();
+    let startDate: Date;
+    
+    switch (timeFilter) {
+      case '24h':
+        startDate = subDays(now, 1);
+        break;
+      case '7d':
+        startDate = subDays(now, 7);
+        break;
+      case '30d':
+        startDate = subDays(now, 30);
+        break;
+      default:
+        startDate = subDays(now, 7);
+    }
+    
+    return data.zoneHistory.filter(change => 
+      isWithinInterval(new Date(change.checked_at), { start: startDate, end: now })
+    );
+  }, [data.zoneHistory, timeFilter]);
+
+  // Prepare chart data
+  const chartData = useMemo(() => {
+    const changes = filteredHistory.filter(change => change.is_change);
+    
+    return changes.map(change => ({
+      date: format(new Date(change.checked_at), 'MMM dd'),
+      datetime: change.checked_at,
+      serial: change.soa_serial,
+      fullDate: formatDate(change.checked_at),
+      changeDetails: change.change_details
+    }));
+  }, [filteredHistory]);
 
   const removeZone = async (zoneId: string) => {
     setRemovingZone(zoneId);
@@ -98,7 +148,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   const isPro = data.user.subscription_tier === 'pro';
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       {/* Success Message */}
       {removedZoneName && (
         <Alert className="border-green-200 bg-green-50">
@@ -224,6 +274,89 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         </Card>
       )}
 
+      {/* DNS Changes Chart */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5" />
+              <CardTitle>DNS Changes Over Time</CardTitle>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-gray-500" />
+              <div className="flex space-x-1">
+                {(['24h', '7d', '30d', 'all'] as TimeFilter[]).map((filter) => (
+                  <Button
+                    key={filter}
+                    variant={timeFilter === filter ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setTimeFilter(filter)}
+                    className="text-xs"
+                  >
+                    {filter}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <CardDescription>
+            SOA serial changes detected in your DNS zone
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {chartData.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p>No changes detected in the selected time range</p>
+              <p className="text-sm">We'll notify you when SOA records change</p>
+            </div>
+          ) : (
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12 }}
+                    tickLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12 }}
+                    tickLine={{ stroke: '#e5e7eb' }}
+                    domain={['dataMin - 1', 'dataMax + 1']}
+                  />
+                  <Tooltip 
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white p-3 border rounded-lg shadow-lg">
+                            <p className="font-medium text-sm">{data.fullDate}</p>
+                            <p className="text-sm text-gray-600">Serial: {data.serial}</p>
+                            {data.changeDetails && (
+                              <p className="text-xs text-gray-500 mt-1">{data.changeDetails}</p>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="serial" 
+                    stroke="#ef4444" 
+                    strokeWidth={2}
+                    dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: '#ef4444', strokeWidth: 2 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Zone History */}
       <Card>
         <CardHeader>
@@ -232,27 +365,31 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
             <span>SOA Change History</span>
           </CardTitle>
           <CardDescription>
-            Recent changes detected in your DNS zone
+            Recent changes detected in your DNS zone ({filteredHistory.length} records)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {data.zoneHistory.length === 0 ? (
+          {filteredHistory.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Shield className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>No changes detected yet</p>
+              <p>No changes detected in the selected time range</p>
               <p className="text-sm">We'll notify you when SOA records change</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {data.zoneHistory.map((change) => (
-                <div key={change.id} className="border rounded-lg p-4">
+              {filteredHistory.map((change) => (
+                <div key={change.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3">
-                      <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5" />
-                      <div>
-                        <div className="font-medium">SOA Record Changed</div>
+                      <div className={`h-5 w-5 mt-0.5 ${change.is_change ? 'text-orange-500' : 'text-gray-400'}`}>
+                        {change.is_change ? <AlertTriangle className="h-5 w-5" /> : <CheckCircle className="h-5 w-5" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium">
+                          {change.is_change ? 'SOA Record Changed' : 'SOA Record Checked'}
+                        </div>
                         <div className="text-sm text-gray-600">
-                          Serial: {change.soa_serial}
+                          Serial: <span className="font-mono">{change.soa_serial}</span>
                         </div>
                         {change.change_details && (
                           <div className="text-sm text-gray-600 mt-1">
@@ -261,15 +398,15 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                         )}
                       </div>
                     </div>
-                    <div className="text-right text-sm text-gray-500">
+                    <div className="text-right text-sm text-gray-500 flex-shrink-0 ml-4">
                       <div className="flex items-center space-x-1">
                         <Calendar className="h-3 w-3" />
-                        <span>{formatDate(change.checked_at)}</span>
+                        <span>{formatDateShort(change.checked_at)}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="mt-3 p-3 bg-gray-50 rounded text-sm font-mono">
-                    {change.soa_record}
+                  <div className="mt-3 p-3 bg-gray-50 rounded text-sm font-mono overflow-x-auto">
+                    <div className="whitespace-pre-wrap break-all">{change.soa_record}</div>
                   </div>
                 </div>
               ))}
