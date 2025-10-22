@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Shield, Eye, AlertTriangle, Mail, LogIn } from "lucide-react";
 import RegistrationForm from "@/components/forms/registration-form";
@@ -12,6 +13,43 @@ import ErrorBoundary from "@/components/error-boundary";
 export default function Home() {
   const [currentView, setCurrentView] = useState<"home" | "login" | "forgot-password" | "dashboard">("home");
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const searchParams = useSearchParams();
+
+  // Auto-login after email verification
+  useEffect(() => {
+    const autoLogin = searchParams.get("autoLogin");
+    const email = searchParams.get("email");
+    
+    if (autoLogin === "true" && email) {
+      // Automatically log in the user after email verification
+      const autoLoginUser = async () => {
+        try {
+          const response = await fetch("/api/auto-login-after-verification", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: email,
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            handleLoginSuccess(data);
+          } else {
+            // If auto-login fails, redirect to login page with email pre-filled
+            setCurrentView("login");
+          }
+        } catch (error) {
+          console.error("Auto-login failed:", error);
+          setCurrentView("login");
+        }
+      };
+
+      autoLoginUser();
+    }
+  }, [searchParams]);
 
   const handleLoginSuccess = (data: any) => {
     setDashboardData(data);

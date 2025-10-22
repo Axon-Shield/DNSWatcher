@@ -28,7 +28,10 @@ export default function VerifyEmailPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token: verificationToken }),
+        body: JSON.stringify({ 
+          token: verificationToken,
+          email: email 
+        }),
       });
 
       const data = await response.json();
@@ -36,6 +39,14 @@ export default function VerifyEmailPage() {
       if (response.ok) {
         setVerificationStatus("success");
         setResult(data);
+        
+        // If password is set, automatically log the user in
+        if (!data.passwordSetupRequired) {
+          // Auto-login the user and redirect to dashboard
+          setTimeout(() => {
+            window.location.href = "/?autoLogin=true&email=" + encodeURIComponent(email || "");
+          }, 2000);
+        }
       } else {
         setVerificationStatus("error");
         setResult(data);
@@ -104,7 +115,7 @@ export default function VerifyEmailPage() {
             <p className="text-gray-600 mb-4">
               Your email address has been successfully verified. Your DNS zones are now being monitored.
             </p>
-            <Button onClick={() => window.location.href = "/dashboard"}>
+            <Button onClick={() => window.location.href = "/"}>
               Go to Dashboard
             </Button>
           </div>
