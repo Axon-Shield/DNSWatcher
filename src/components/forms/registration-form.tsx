@@ -117,8 +117,9 @@ export default function RegistrationForm({ onSuccess, onRedirectToLogin }: Regis
   };
 
   const handlePasswordSet = () => {
-    // After password setup, check if email verification is needed
-    // This should not happen in the normal flow, but handle it just in case
+    // This should not happen in the normal flow since email verification is required
+    // after password setup. This is only a fallback.
+    console.log("handlePasswordSet called - this should not happen in normal flow");
     setIsSuccess(true);
     reset();
     if (onSuccess) {
