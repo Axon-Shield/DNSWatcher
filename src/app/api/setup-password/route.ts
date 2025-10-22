@@ -35,12 +35,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update user with password set flag
+    // Create Supabase Auth user with password
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: email,
+      password: password,
+      email_confirm: true,
+    });
+
+    if (authError) {
+      console.error("Error creating Supabase Auth user:", authError);
+      return NextResponse.json(
+        { message: "Failed to create account" },
+        { status: 500 }
+      );
+    }
+
+    // Update user with password set flag and email confirmed
     const { error: updateError } = await supabase
       .from("users")
       .update({
         password_set: true,
         password_set_at: new Date().toISOString(),
+        email_confirmed: true,
       })
       .eq("id", user.id);
 
