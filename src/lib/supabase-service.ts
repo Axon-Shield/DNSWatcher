@@ -20,6 +20,11 @@ export function createServiceClient() {
       auth: {
         autoRefreshToken: false,
         persistSession: false
+      },
+      global: {
+        headers: {
+          'Authorization': `Bearer ${serviceRoleKey}`
+        }
       }
     }
   );

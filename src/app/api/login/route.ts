@@ -8,14 +8,9 @@ const loginSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  console.log("Login API called");
-  
   try {
     const body = await request.json();
-    console.log("Request body parsed:", { email: body.email, hasPassword: !!body.password });
-    
     const { email, password } = loginSchema.parse(body);
-    console.log("Schema validation passed:", { email, hasPassword: !!password });
 
     const supabase = createServiceClient();
 
@@ -49,7 +44,12 @@ export async function POST(request: NextRequest) {
       .select("*")
       .eq("email", email);
     
-    console.log("Basic user lookup:", { count: basicUsers?.length || 0, error: basicError?.message });
+    console.log("Basic user lookup:", { 
+      count: basicUsers?.length || 0, 
+      error: basicError?.message,
+      searchedEmail: email,
+      foundEmails: basicUsers?.map(u => u.email) || []
+    });
     
     // Step 2: Test with email_confirmed
     const { data: confirmedUsers, error: confirmedError } = await supabase
