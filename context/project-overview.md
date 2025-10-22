@@ -13,8 +13,8 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 ## Core Functionality
 - **User Registration**: Email + DNS zone registration with email verification
 - **User Authentication**: Login system with email + DNS zone authentication
-- **Automated Monitoring**: Background task checks SOA records every 1 minute
-- **Change Detection**: Instant alerts when DNS zones change
+- **Smart High-Frequency Monitoring**: Background task checks SOA records every 30 seconds
+- **Intelligent Change Detection**: Smart filtering prevents notification spam
 - **Email Notifications**: Real-time security alerts via Resend API
 - **Historical Tracking**: Complete audit trail of all DNS checks
 - **Zone Management**: Users can remove and re-enable zones
@@ -26,7 +26,7 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - **Styling**: Tailwind CSS
 - **Backend**: Next.js API routes + Supabase Edge Functions
 - **Database**: Supabase PostgreSQL with Row Level Security
-- **Automation**: pg_cron for scheduled tasks (every 1 minute)
+- **Automation**: pg_cron for scheduled tasks (every 30 seconds)
 - **Email**: Resend API integration via Supabase Edge Functions
 - **Version Control**: GitHub MCP integration
 
@@ -35,7 +35,7 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - **Registration System**: Email + DNS zone registration with verification
 - **User Authentication**: Login system with email + DNS zone
 - **User Dashboard**: Zone management and SOA history viewing
-- **Background Monitoring**: Automated SOA record checking every minute
+- **Background Monitoring**: Automated SOA record checking every 30 seconds with smart filtering
 - **Notification System**: Email alerts via Resend API
 - **Zone Management**: Remove and re-enable zones functionality
 
@@ -49,17 +49,19 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 ## Development Status
 - ✅ Database schema created and secured with RLS
 - ✅ Edge Functions deployed and active (send-email, dns-monitor)
-- ✅ Cron jobs configured and operational (every 1 minute)
+- ✅ Cron jobs configured and operational (every 30 seconds)
 - ✅ Frontend application built and functional
 - ✅ User registration and authentication system
 - ✅ Email verification flow implemented
 - ✅ User dashboard with zone management
 - ✅ Zone reactivation functionality
 - ✅ Email notifications via Resend API
-- ✅ **DNS Monitoring System**: ✅ **FULLY OPERATIONAL**
+- ✅ **Smart DNS Monitoring System**: ✅ **FULLY OPERATIONAL** (30-second frequency)
+- ✅ **Intelligent Change Detection**: ✅ **VERIFIED** (Smart filtering prevents spam)
 - ✅ **SOA Change Detection**: ✅ **VERIFIED** (Serial 2386530407 → 2386530404)
 - ✅ **Email Notifications**: ✅ **VERIFIED** (Email ID: 85742c62-110c-4743-8b2c-689978e05d1e)
-- ✅ **Cron Job Execution**: ✅ **VERIFIED** (Running every minute)
+- ✅ **High-Frequency Cron Job**: ✅ **VERIFIED** (Running every 30 seconds)
+- ✅ **Spam Prevention**: ✅ **VERIFIED** (Smart filtering system active)
 - ✅ Complete application committed to GitHub
 - ✅ GitHub MCP integration configured
 - ✅ Context-aware development rules established

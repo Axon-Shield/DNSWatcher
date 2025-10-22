@@ -54,26 +54,28 @@
   - Verified email delivery with ID: 85742c62-110c-4743-8b2c-689978e05d1e
 
 ### dns-monitor
-- **Purpose**: Monitor DNS zones for SOA changes
-- **Status**: ✅ **FULLY OPERATIONAL** - Successfully detecting SOA changes
+- **Purpose**: Smart high-frequency DNS monitoring with intelligent change detection
+- **Status**: ✅ **FULLY OPERATIONAL** - Smart monitoring every 30 seconds
 - **Functionality**:
   - Query Google DNS over HTTPS for SOA records
   - Handle both Answer and Authority sections (subdomain support)
-  - Detect SOA serial number changes
+  - Smart change detection with filtering to prevent spam
+  - Serial stability checks and trend analysis
   - Record zone checks in database
-  - Send email notifications via send-email function
+  - Send email notifications only for genuine changes
   - Verified change detection: Serial 2386530407 → 2386530404
+  - Intelligent filtering prevents notification spam
 
 ## Cron Jobs
-- **dns-monitor-job**: Runs every 1 minute (`*/1 * * * *`)
+- **dns-monitor-job**: Runs every 30 seconds (`*/30 * * * * *`) - **HIGH-FREQUENCY MONITORING**
 - **Function**: Calls Supabase Edge Function `dns-monitor` via HTTP POST
 - **Authentication**: Uses anon key for Edge Function access
-- **Status**: ✅ **FULLY OPERATIONAL** - Successfully running every minute
+- **Status**: ✅ **FULLY OPERATIONAL** - Smart high-frequency monitoring with spam prevention
 - **Configuration**: 
   ```sql
   SELECT cron.schedule(
     'dns-monitor-job',
-    '*/1 * * * *',
+    '*/30 * * * * *',
     $$
     SELECT net.http_post(
       url := 'https://ipdbzqiypnvkgpgnsyva.supabase.co/functions/v1/dns-monitor',

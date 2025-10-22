@@ -38,21 +38,31 @@ example.com. 3600 IN SOA ns1.example.com. admin.example.com. (
 - **Usage**: `new dns().query(zoneName, "SOA")`
 - **Considerations**: May have rate limiting, requires proper error handling
 
-## Change Detection Logic
-```typescript
-// Compare serial numbers
-const isChange = !lastCheck || lastCheck.soa_serial !== currentSerial;
+## Smart Change Detection System ✅
+### Intelligent Filtering Logic
+- **Multi-Server Consistency**: Queries multiple DNS servers for consensus
+- **Serial Stability Check**: Prevents notifications for recently seen serials
+- **Change Threshold**: Only notifies for significant serial changes
+- **Activity Throttling**: Maximum 3 checks per 2-minute window
+- **Notification Cooldown**: 1-minute minimum between notifications
+- **Trend Analysis**: Analyzes recent check patterns to identify genuine changes
 
-// Record the check
-await supabase.from('zone_checks').insert({
-  zone_id: zone.id,
-  soa_serial: currentSerial,
-  soa_record: JSON.stringify(soaRecord),
-  checked_at: new Date().toISOString(),
-  is_change: isChange,
-  change_details: isChange ? 'SOA serial number changed' : null
-});
+### Database Function
+```sql
+smart_soa_change_detection(
+  zone_id_param UUID,
+  new_serial BIGINT,
+  min_change_threshold INTEGER DEFAULT 1,
+  stability_period_minutes INTEGER DEFAULT 2
+)
 ```
+
+### Benefits
+- **⚡ Fast Detection**: 30-second monitoring frequency
+- **🛡️ Spam Protection**: Intelligent filtering prevents false alerts
+- **📈 Trend Analysis**: Understands DNS propagation patterns
+- **💾 Complete Logging**: All checks recorded for analysis
+- **🎛️ Configurable**: Adjustable thresholds and periods
 
 ## Error Handling
 - **DNS Query Failures**: Log error, continue with other zones
@@ -73,14 +83,15 @@ await supabase.from('zone_checks').insert({
 - **Error Disclosure**: Don't expose sensitive information
 
 ## Monitoring Schedule
-- **Frequency**: Every 1 minute (`*/1 * * * *`)
+- **Frequency**: Every 30 seconds (`*/30 * * * * *`) - **HIGH-FREQUENCY MONITORING**
 - **Implementation**: pg_cron job calling Supabase Edge Function
 - **Cron Job**: `SELECT net.http_post(url := 'https://ipdbzqiypnvkgpgnsyva.supabase.co/functions/v1/dns-monitor', ...)`
 - **Authentication**: Uses anon key for Edge Function calls
 - **Reliability**: Supabase Edge Functions with automatic scaling
 - **Email Service**: Resend API integration
 - **Sender**: noreply@dnswatcher.axonshield.com
-- **Status**: ✅ **FULLY OPERATIONAL** - Successfully detecting SOA changes and sending emails
+- **Smart Filtering**: Intelligent change detection prevents notification spam
+- **Status**: ✅ **FULLY OPERATIONAL** - Smart high-frequency monitoring with spam prevention
 
 ## Notification Triggers
 - **SOA Serial Change**: Primary trigger for notifications
