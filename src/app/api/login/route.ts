@@ -14,15 +14,11 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient();
 
-    console.log("Attempting to sign in user:", email);
-
     // Authenticate user with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-
-    console.log("Auth result:", { authData: !!authData, authError: authError?.message });
 
     if (authError || !authData.user) {
       return NextResponse.json(

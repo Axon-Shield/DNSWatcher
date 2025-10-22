@@ -50,13 +50,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update user with password set flag and email confirmed
+    // Update user with password set flag (but keep email_confirmed as false until verified)
     const { error: updateError } = await supabase
       .from("users")
       .update({
         password_set: true,
         password_set_at: new Date().toISOString(),
-        email_confirmed: true,
       })
       .eq("id", user.id);
 
