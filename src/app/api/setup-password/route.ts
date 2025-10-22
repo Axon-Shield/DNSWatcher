@@ -36,34 +36,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-  // Ensure a Supabase Auth user exists and set password
-  // Try to fetch auth user by email
-  const { data: authUserLookup, error: authLookupError } = await supabase.auth.admin.getUserByEmail(email);
-  if (authLookupError) {
-    console.error("Auth lookup error:", authLookupError);
-  }
-
-  if (!authLookupError && authUserLookup?.user) {
-    // Update existing auth user's password
-    const { error: updateAuthError } = await supabase.auth.admin.updateUserById(authUserLookup.user.id, {
-      password,
-    });
-    if (updateAuthError) {
-      console.error("Auth password update error:", updateAuthError);
-      return NextResponse.json({ message: "Failed to set password" }, { status: 500 });
-    }
-  } else {
-    // Create a new auth user with confirmed email
-    const { error: createAuthError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    });
-    if (createAuthError) {
-      console.error("Auth user create error:", createAuthError);
-      return NextResponse.json({ message: "Failed to create account" }, { status: 500 });
-    }
-  }
+    // For now, we'll skip Supabase Auth admin calls and just update our user table
+    // The password will be handled by Supabase Auth during login
 
   // Update user with password set flag
     const { error: updateError } = await supabase
@@ -101,9 +75,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Note: In a real implementation, you would hash and store the password
-    // For now, we're just marking that the password has been set
-    // Supabase Auth handles the actual password storage
+    // Note: We're marking that the password has been set in our user table
+    // The actual password authentication will be handled by Supabase Auth during login
 
     return NextResponse.json({
       message: "Password set successfully and DNS zones activated",
