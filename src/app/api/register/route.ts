@@ -34,6 +34,18 @@ export async function POST(request: NextRequest) {
     let userId: string;
     if (existingUser) {
       userId = existingUser.id;
+      
+      // If user already has password set, redirect to login
+      if (existingUser.password_set) {
+        return NextResponse.json(
+          { 
+            message: "Account already exists. Please sign in instead.",
+            redirectToLogin: true,
+            email: existingUser.email
+          },
+          { status: 400 }
+        );
+      }
     } else {
       const { data: newUser, error: newUserError } = await supabase
         .from("users")
@@ -69,6 +81,18 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingZone) {
+      // If user has password set and zone exists, redirect to login
+      if (existingUser && existingUser.password_set) {
+        return NextResponse.json(
+          { 
+            message: "Account and DNS zone already exist. Please sign in instead.",
+            redirectToLogin: true,
+            email: existingUser.email
+          },
+          { status: 400 }
+        );
+      }
+      
       return NextResponse.json(
         { message: "DNS zone is already being monitored for this email" },
         { status: 400 }

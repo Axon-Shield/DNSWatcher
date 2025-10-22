@@ -196,7 +196,13 @@ export default function Home() {
         {/* Registration Form */}
         <div className="max-w-2xl mx-auto">
           <ErrorBoundary>
-            <RegistrationForm />
+            <RegistrationForm 
+              onSuccess={() => setCurrentView("login")}
+              onRedirectToLogin={(email) => {
+                setCurrentView("login");
+                // You could also pre-fill the email in the login form
+              }}
+            />
           </ErrorBoundary>
         </div>
       </main>

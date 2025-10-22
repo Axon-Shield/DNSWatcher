@@ -20,9 +20,10 @@ type RegistrationFormData = z.infer<typeof registrationSchema>;
 
 interface RegistrationFormProps {
   onSuccess?: () => void;
+  onRedirectToLogin?: (email: string) => void;
 }
 
-export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
+export default function RegistrationForm({ onSuccess, onRedirectToLogin }: RegistrationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +56,15 @@ export default function RegistrationForm({ onSuccess }: RegistrationFormProps) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: "Network error" }));
+        
+        // If user already exists with password, redirect to login
+        if (errorData.redirectToLogin) {
+          if (onRedirectToLogin) {
+            onRedirectToLogin(errorData.email);
+          }
+          return;
+        }
+        
         throw new Error(errorData.message || "Registration failed");
       }
 
