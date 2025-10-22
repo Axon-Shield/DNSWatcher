@@ -30,7 +30,7 @@ export default function VerifyEmailPage() {
         },
         body: JSON.stringify({ 
           token: verificationToken,
-          email: email 
+          type: 'email'
         }),
       });
 

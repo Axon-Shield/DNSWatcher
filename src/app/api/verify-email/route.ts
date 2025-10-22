@@ -3,31 +3,42 @@ import { createServiceClient } from "@/lib/supabase-service";
 import { z } from "zod";
 
 const verifyEmailSchema = z.object({
-  email: z.string().email(),
   token: z.string().min(1),
+  type: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, token } = verifyEmailSchema.parse(body);
+    const { token, type } = verifyEmailSchema.parse(body);
 
     const supabase = createServiceClient();
 
-    // Get the user with token expiration check (24 hours)
+    // Verify the token with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.verifyOtp({
+      token_hash: token,
+      type: type || 'email',
+    });
+
+    if (authError || !authData.user) {
+      return NextResponse.json(
+        { message: "Invalid verification token" },
+        { status: 400 }
+      );
+    }
+
+    // Get the user from our users table
     const { data: user, error: userError } = await supabase
       .from("users")
       .select("*")
-      .eq("email", email)
-      .eq("confirmation_token", token)
+      .eq("email", authData.user.email)
       .eq("email_confirmed", false)
-      .gte("confirmation_sent_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // 24 hours ago
       .single();
 
     if (userError || !user) {
       return NextResponse.json(
-        { message: "Invalid verification token or email already verified" },
-        { status: 400 }
+        { message: "User not found or already verified" },
+        { status: 404 }
       );
     }
 
@@ -36,8 +47,6 @@ export async function POST(request: NextRequest) {
       .from("users")
       .update({
         email_confirmed: true,
-        confirmation_token: null,
-        confirmation_sent_at: null,
       })
       .eq("id", user.id);
 
@@ -74,6 +83,7 @@ export async function POST(request: NextRequest) {
       message: "Email verified successfully",
       passwordSetupRequired: !user.password_set,
       userId: user.id,
+      email: user.email,
     });
 
   } catch (error) {

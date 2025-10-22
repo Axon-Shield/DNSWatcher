@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
 import { z } from "zod";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM_EMAIL = "dnswatcher@axonshield.com";
 
 const sendVerificationSchema = z.object({
   email: z.string().email(),
@@ -33,47 +29,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a confirmation token
-    const confirmationToken = crypto.randomUUID();
-    const confirmationSentAt = new Date().toISOString();
-
-    // Update user with confirmation token
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({
-        confirmation_token: confirmationToken,
-        confirmation_sent_at: confirmationSentAt,
-      })
-      .eq("id", user.id);
-
-    if (updateError) {
-      console.error("Error updating confirmation token:", updateError);
-      return NextResponse.json(
-        { message: "Failed to generate verification token" },
-        { status: 500 }
-      );
-    }
-
-    // Send verification email using Resend
-    const verificationLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/verify-email?token=${confirmationToken}&email=${encodeURIComponent(email)}`;
-    
-    const { data: resendData, error: emailError } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: email,
-      subject: "Verify Your DNSWatcher Email Address",
-      html: `
-        <p>Hello,</p>
-        <p>Thank you for registering with DNSWatcher. Please click the link below to verify your email address:</p>
-        <p><a href="${verificationLink}">Verify Email Address</a></p>
-        <p>This link will expire in 24 hours.</p>
-        <p>If you did not register for DNSWatcher, please ignore this email.</p>
-        <p>Best regards,</p>
-        <p>The DNSWatcher Team</p>
-      `,
+    // Use Supabase Auth to send verification email
+    const { error: authError } = await supabase.auth.resend({
+      type: 'signup',
+      email: email,
     });
 
-    if (emailError) {
-      console.error("Error sending verification email via Resend:", emailError);
+    if (authError) {
+      console.error("Error sending verification email via Supabase Auth:", authError);
       return NextResponse.json(
         { message: "Failed to send verification email" },
         { status: 500 }
