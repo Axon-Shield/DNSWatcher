@@ -8,9 +8,14 @@ const loginSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  console.log("Login API called");
+  
   try {
     const body = await request.json();
+    console.log("Request body parsed:", { email: body.email, hasPassword: !!body.password });
+    
     const { email, password } = loginSchema.parse(body);
+    console.log("Schema validation passed:", { email, hasPassword: !!password });
 
     const supabase = createServiceClient();
 
@@ -20,7 +25,10 @@ export async function POST(request: NextRequest) {
       password,
     });
 
+    console.log("Auth result:", { hasAuthData: !!authData, authError: authError?.message });
+
     if (authError || !authData.user) {
+      console.log("Auth failed:", authError?.message);
       return NextResponse.json(
         { 
           success: false, 
@@ -30,16 +38,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log("Auth successful, looking up user:", email);
+
     // Get user data from our users table
-    const { data: user, error: userError } = await supabase
+    const { data: users, error: userError } = await supabase
       .from("users")
       .select("*")
       .eq("email", email)
       .eq("email_confirmed", true)
-      .eq("password_set", true)
-      .single();
+      .eq("password_set", true);
 
-    if (userError || !user) {
+    console.log("User lookup result:", { userCount: users?.length || 0, userError: userError?.message });
+
+    if (userError || !users || users.length === 0) {
+      console.log("User lookup failed:", userError?.message);
       return NextResponse.json(
         { 
           success: false, 
@@ -49,6 +61,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Use the first user (should only be one)
+    const user = users[0];
+
+    console.log("User found, looking up zones for user:", user.id);
+
     // Get all active zones for this user
     const { data: allZones, error: allZonesError } = await supabase
       .from("dns_zones")
@@ -57,11 +74,14 @@ export async function POST(request: NextRequest) {
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
+    console.log("Zone lookup result:", { hasZones: !!allZones, zoneCount: allZones?.length, zonesError: allZonesError?.message });
+
     if (allZonesError) {
       console.error("Error fetching all zones:", allZonesError);
     }
 
     if (!allZones || allZones.length === 0) {
+      console.log("No zones found for user");
       return NextResponse.json(
         { 
           success: false, 
