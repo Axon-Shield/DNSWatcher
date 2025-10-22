@@ -13,23 +13,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient();
 
-    // Check if user exists and has a password set
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", email)
-      .eq("email_confirmed", true)
-      .eq("password_set", true)
-      .single();
-
-    if (userError || !user) {
-      // Don't reveal if user exists or not for security
-      return NextResponse.json({
-        message: "If an account with that email exists, a password reset link has been sent.",
-      });
-    }
-
-    // Use Supabase Auth to send password reset email
+    // Use Supabase Auth to send password reset email (do not leak user existence)
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password`,
     });

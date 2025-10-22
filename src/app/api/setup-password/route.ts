@@ -36,7 +36,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update user with password set flag
+  // Ensure a Supabase Auth user exists and set password
+  // Try to fetch auth user by email
+  const { data: authUserLookup, error: authLookupError } = await supabase.auth.admin.getUserByEmail(email);
+  if (authLookupError) {
+    console.error("Auth lookup error:", authLookupError);
+  }
+
+  if (!authLookupError && authUserLookup?.user) {
+    // Update existing auth user's password
+    const { error: updateAuthError } = await supabase.auth.admin.updateUserById(authUserLookup.user.id, {
+      password,
+    });
+    if (updateAuthError) {
+      console.error("Auth password update error:", updateAuthError);
+      return NextResponse.json({ message: "Failed to set password" }, { status: 500 });
+    }
+  } else {
+    // Create a new auth user with confirmed email
+    const { error: createAuthError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+    if (createAuthError) {
+      console.error("Auth user create error:", createAuthError);
+      return NextResponse.json({ message: "Failed to create account" }, { status: 500 });
+    }
+  }
+
+  // Update user with password set flag
     const { error: updateError } = await supabase
       .from("users")
       .update({
