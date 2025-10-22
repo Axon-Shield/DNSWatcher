@@ -117,6 +117,8 @@ export default function RegistrationForm({ onSuccess, onRedirectToLogin }: Regis
   };
 
   const handlePasswordSet = () => {
+    // After password setup, check if email verification is needed
+    // This should not happen in the normal flow, but handle it just in case
     setIsSuccess(true);
     reset();
     if (onSuccess) {
