@@ -14,13 +14,14 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient();
 
-    // Get the user
+    // Get the user with token expiration check (24 hours)
     const { data: user, error: userError } = await supabase
       .from("users")
       .select("*")
       .eq("email", email)
       .eq("confirmation_token", token)
       .eq("email_confirmed", false)
+      .gte("confirmation_sent_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // 24 hours ago
       .single();
 
     if (userError || !user) {

@@ -19,6 +19,9 @@ const registrationSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Basic rate limiting by IP (in production, use Redis or similar)
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    
     const body = await request.json();
     const { email, dnsZone } = registrationSchema.parse(body);
 

@@ -3,40 +3,23 @@ import { createServiceClient } from "@/lib/supabase-service";
 import { z } from "zod";
 
 const removeZoneSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  userId: z.string().uuid("Invalid user ID"),
   zoneId: z.string().uuid("Invalid zone ID"),
 });
 
 export async function DELETE(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, zoneId } = removeZoneSchema.parse(body);
+    const { userId, zoneId } = removeZoneSchema.parse(body);
 
     const supabase = createServiceClient();
-
-    // Find user by email
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("id")
-      .eq("email", email)
-      .single();
-
-    if (userError || !user) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: "User not found." 
-        },
-        { status: 404 }
-      );
-    }
 
     // Verify the zone belongs to this user
     const { data: zone, error: zoneError } = await supabase
       .from("dns_zones")
       .select("*")
       .eq("id", zoneId)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single();
 
     if (zoneError || !zone) {
