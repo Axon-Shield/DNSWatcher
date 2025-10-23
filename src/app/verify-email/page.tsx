@@ -18,6 +18,8 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
   
+  console.log("VerifyEmailContent rendered with email:", email);
+  
   const [verificationStatus, setVerificationStatus] = useState<"pending" | "success" | "error">("pending");
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [otp, setOtp] = useState("");
@@ -250,25 +252,5 @@ function VerifyEmailContent() {
 }
 
 export default function VerifyEmailPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Email Verification</CardTitle>
-            <CardDescription>
-              Loading verification...
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    }>
-      <VerifyEmailContent />
-    </Suspense>
-  );
+  return <VerifyEmailContent />;
 }
