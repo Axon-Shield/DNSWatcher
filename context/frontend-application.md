@@ -32,21 +32,55 @@ DNSWatcher uses Next.js 14 with the App Router for modern React development patt
 
 ### Registration Form (`src/components/forms/registration-form.tsx`)
 - **Validation**: React Hook Form + Zod schema
-- **States**: Loading, success, error handling, email verification flow
+- **States**: Loading, success, error handling, password setup flow
 - **API Integration**: POST to `/api/register`
 - **User Feedback**: Success animation, error messages, reactivation feedback
-- **Email Verification**: Multi-step flow with verification status checking
+- **Password Setup**: Multi-step flow with password creation
+- **Email Verification**: Triggers after password setup
 - **Zone Reactivation**: Handles re-enabling soft-deleted zones
 - **Features**:
-  - Email confirmation required for new users
+  - Password setup required for new users
+  - Email verification after password creation
   - Automatic reactivation for existing soft-deleted zones
   - Different success messages for new vs reactivated zones
 
+### Password Setup Form (`src/components/forms/password-setup.tsx`)
+- **Purpose**: New users set secure password after registration
+- **Validation**: React Hook Form + Zod schema with password requirements
+- **API Integration**: POST to `/api/setup-password`
+- **Features**: 
+  - Password strength validation
+  - Confirmation field
+  - Triggers email verification after setup
+  - Loading states and error handling
+
 ### Login Form (`src/components/forms/login-form.tsx`)
-- **Purpose**: Authenticate existing users with email + DNS zone
+- **Purpose**: Authenticate existing users with email + password
 - **Validation**: React Hook Form + Zod schema
 - **API Integration**: POST to `/api/login`
-- **Features**: Returns user data, zones, and SOA history
+- **Features**: 
+  - Email/password authentication
+  - Forgot password link
+  - Returns user data, zones, and SOA history
+
+### Forgot Password Form (`src/components/forms/forgot-password.tsx`)
+- **Purpose**: Users request password reset email
+- **Validation**: React Hook Form + Zod schema
+- **API Integration**: POST to `/api/forgot-password`
+- **Features**: 
+  - Email validation
+  - Success feedback
+  - Uses Supabase Auth password reset
+
+### Email Verification Form (`src/components/forms/email-verification.tsx`)
+- **Purpose**: Users verify email after password setup
+- **Auto-Checking**: Automatically checks verification status
+- **Manual Check**: "Check Now" button for manual verification
+- **Resend**: Option to resend verification email
+- **Features**:
+  - Real-time status checking
+  - Professional UI with loading states
+  - Auto-progression after verification
 
 ### User Dashboard (`src/components/user-dashboard.tsx`)
 - **Purpose**: Display user's monitoring dashboard

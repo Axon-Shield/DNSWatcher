@@ -9,7 +9,8 @@
 ### Tables
 - **users**: User accounts, email verification, subscription tiers
   - `email_confirmed`: Boolean for email verification status
-  - `confirmation_token`: UUID for email verification
+  - `password_set`: Boolean for password setup status
+  - `password_set_at`: Timestamp when password was set
   - `subscription_tier`: 'free' or 'pro' enum
   - `max_zones`: Integer limit (1 for free, unlimited for pro)
 - **dns_zones**: Monitored DNS zones with soft delete support
@@ -22,10 +23,12 @@
 - **notifications**: Sent notification logs
   - `sent_at`: Timestamp when notification was sent
 
-### Row Level Security (RLS)
-- All tables have RLS enabled
-- Users can only access their own data
-- Proper policies implemented for data isolation
+### Supabase Auth Integration
+- **User Management**: Users created in both `auth.users` and `public.users`
+- **Password Authentication**: Uses Supabase Auth for password-based login
+- **Email Verification**: Supabase Auth handles email verification tokens
+- **Password Reset**: Uses Supabase Auth's built-in password reset functionality
+- **Session Management**: Supabase Auth manages user sessions
 
 ## Edge Functions
 ### send-email

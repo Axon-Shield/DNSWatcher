@@ -3,45 +3,82 @@
 ## User Registration Flow
 ### Multi-Step Registration Process
 1. **Form Submission**: User enters email and DNS zone
-2. **Email Verification**: New users receive confirmation email
-3. **Zone Activation**: Zones activated only after email verification
-4. **Monitoring Start**: DNS monitoring begins after verification
+2. **Password Setup**: New users must set a secure password
+3. **Email Verification**: Users receive confirmation email after password setup
+4. **Zone Activation**: Zones activated only after email verification
+5. **Auto-Login**: Users automatically logged in after verification
 
 ### Registration API (`/api/register`)
 - **Input Validation**: Zod schema validation
-- **User Creation**: Creates user with confirmation token
+- **User Creation**: Creates user with `email_confirmed: false`, `password_set: false`
 - **Zone Management**: Handles both new zones and reactivation
 - **Subscription Limits**: Enforces 1 zone limit for free users
-- **Email Confirmation**: Generates UUID confirmation token
+- **Existing User Check**: Redirects to login if user already has password
+
+## Password-Based Authentication System
+### Password Setup Flow
+1. **Registration**: User registers with email and DNS zone
+2. **Password Creation**: User sets secure password via `PasswordSetup` component
+3. **Supabase Auth**: Creates user in Supabase Auth with password
+4. **Email Verification**: Triggers email verification process
+5. **Auto-Login**: User automatically logged in after verification
+
+### Password Setup API (`/api/setup-password`)
+- **Input**: `{ email: string, password: string }`
+- **Supabase Auth**: Creates user in Supabase Auth with password
+- **User Update**: Sets `password_set: true` in users table
+- **Response**: Returns `emailVerificationRequired: true` flag
+
+### Login API (`/api/login`)
+- **Input**: `{ email: string, password: string }`
+- **Supabase Auth**: Authenticates user with email/password
+- **User Lookup**: Finds user in users table with `email_confirmed: true`
+- **Response**: User data, zones, and SOA history
+
+### Forgot Password API (`/api/forgot-password`)
+- **Input**: `{ email: string }`
+- **Supabase Auth**: Uses `supabase.auth.resetPasswordForEmail`
+- **Email Sending**: Supabase handles password reset email
+- **Response**: Success message
 
 ## Email Verification System
-### Verification Process
-- **Token Generation**: UUID-based confirmation tokens
-- **Email Sending**: Confirmation emails sent to new users
-- **Status Tracking**: `email_confirmed` boolean field
+### Enhanced Verification Process
+- **Supabase Auth Integration**: Uses Supabase Auth for email verification
+- **Resend API**: Sends emails via Resend to avoid rate limits
+- **Status Sync**: Auto-syncs verification status between Supabase Auth and users table
 - **Zone Activation**: Zones become active after verification
 
 ### Verification API (`/api/verify-email`)
-- **Token Validation**: Validates confirmation token
-- **Email Confirmation**: Updates `email_confirmed` status
-- **Zone Activation**: Activates associated DNS zones
-- **Token Cleanup**: Clears used confirmation tokens
+- **Supabase Auth**: Uses `supabase.auth.verifyOtp` for token validation
+- **User Update**: Sets `email_confirmed: true` in users table
+- **Zone Activation**: Activates zones if password is set
+- **Auto-Login**: Triggers auto-login if password is set
 
 ### Verification Status API (`/api/check-verification-status`)
-- **Status Check**: Returns verification status for user
-- **Frontend Integration**: Used by registration form for status updates
+- **Dual Check**: Checks both users table and Supabase Auth status
+- **Auto-Sync**: Updates users table if Supabase Auth shows verified
+- **Zone Activation**: Auto-activates zones when verification detected
+- **Response**: Returns verification status and password setup requirement
 
-## User Authentication
-### Login System
-- **Email + Zone Authentication**: Users login with email and specific DNS zone
-- **Zone Validation**: Verifies zone belongs to user and is active
-- **Dashboard Access**: Returns user data, zones, and SOA history
+### Send Verification Email API (`/api/send-verification-email`)
+- **Resend Integration**: Uses Resend API instead of Supabase Auth resend
+- **Rate Limit Avoidance**: Prevents Supabase Auth rate limit issues
+- **Token Generation**: Uses Supabase Auth for token generation
+- **Email Template**: Professional HTML email template
 
-### Login API (`/api/login`)
-- **Input**: `{ email: string, dnsZone: string }`
-- **Validation**: Checks email verification status
-- **Response**: User data, current zone, zone history, all zones
-- **Error Handling**: Proper error messages for invalid credentials
+## Auto-Login System
+### Auto-Login After Verification
+- **Trigger**: Email verification page redirects with `autoLogin=true` parameter
+- **API Call**: Calls `/api/auto-login-after-verification`
+- **User Lookup**: Finds verified user with password set
+- **Zone Data**: Returns user data and active zones
+- **Dashboard Access**: Automatically logs user into dashboard
+
+### Auto-Login API (`/api/auto-login-after-verification`)
+- **Input**: `{ email: string }`
+- **User Validation**: Checks `email_confirmed: true` and `password_set: true`
+- **Zone Fetching**: Gets all active zones for user
+- **Response**: User data, current zone, all zones, empty history
 
 ## Subscription Management
 ### Subscription Tiers
