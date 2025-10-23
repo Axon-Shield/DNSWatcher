@@ -30,7 +30,8 @@ function VerifyEmailContent() {
         },
         body: JSON.stringify({ 
           token: verificationToken,
-          type: 'email'
+          type: 'email',
+          email: email
         }),
       });
 
