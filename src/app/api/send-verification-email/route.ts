@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       body: {
         to: email,
         subject: 'DNSWatcher Email Verification Code',
+        text: `DNSWatcher Email Verification Code\n\nYour verification code is: ${otp}\n\nEnter this code in the verification page to complete your email verification.\n\nThis code will expire in 5 minutes.\n\nIf you didn't request this verification, please ignore this email.`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Email Verification Code</h2>
