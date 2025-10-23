@@ -37,34 +37,44 @@
 
 ### Forgot Password API (`/api/forgot-password`)
 - **Input**: `{ email: string }`
-- **Supabase Auth**: Uses `supabase.auth.resetPasswordForEmail`
-- **Email Sending**: Supabase handles password reset email
-- **Response**: Success message
+- **Resend API**: Uses Resend API exclusively for password reset emails
+- **User Validation**: Checks if user exists and has password set
+- **Security**: Always returns success to prevent email enumeration
+- **Custom Template**: Professional HTML email template with reset link
+- **Response**: Success message (regardless of user existence)
+
+### Reset Password API (`/api/reset-password`)
+- **Input**: `{ token: string, email: string, newPassword: string }`
+- **User Validation**: Verifies user exists and has password set
+- **Supabase Auth**: Updates password in Supabase Auth system
+- **Security**: Validates reset token and user ownership
+- **Response**: Success confirmation
 
 ## Email Verification System
-### Enhanced Verification Process
-- **Supabase Auth Integration**: Uses Supabase Auth for email verification
-- **Resend API**: Sends emails via Resend to avoid rate limits
-- **Status Sync**: Auto-syncs verification status between Supabase Auth and users table
+### Resend-Only Verification Process
+- **Resend API**: Uses Resend API exclusively for all email sending
+- **Custom Tokens**: Generates secure verification tokens (no Supabase Auth dependency)
+- **Status Sync**: Manages verification status in users table
 - **Zone Activation**: Zones become active after verification
+- **Auto-Login**: Users automatically logged in after verification
 
 ### Verification API (`/api/verify-email`)
-- **Supabase Auth**: Uses `supabase.auth.verifyOtp` for token validation
+- **Custom Token**: Validates custom verification tokens (not Supabase Auth tokens)
 - **User Update**: Sets `email_confirmed: true` in users table
 - **Zone Activation**: Activates zones if password is set
 - **Auto-Login**: Triggers auto-login if password is set
 
 ### Verification Status API (`/api/check-verification-status`)
-- **Dual Check**: Checks both users table and Supabase Auth status
-- **Auto-Sync**: Updates users table if Supabase Auth shows verified
+- **Users Table Check**: Checks verification status in users table
+- **Supabase Auth Sync**: Syncs with Supabase Auth if needed
 - **Zone Activation**: Auto-activates zones when verification detected
 - **Response**: Returns verification status and password setup requirement
 
 ### Send Verification Email API (`/api/send-verification-email`)
-- **Resend Integration**: Uses Resend API instead of Supabase Auth resend
-- **Rate Limit Avoidance**: Prevents Supabase Auth rate limit issues
-- **Token Generation**: Uses Supabase Auth for token generation
-- **Email Template**: Professional HTML email template
+- **Resend Integration**: Uses Resend API exclusively for email sending
+- **Custom Tokens**: Generates secure verification tokens
+- **Professional Template**: HTML email template with verification link
+- **No Supabase Auth**: Completely independent of Supabase Auth email system
 
 ## Auto-Login System
 ### Auto-Login After Verification
