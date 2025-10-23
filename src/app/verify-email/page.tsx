@@ -4,7 +4,9 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { CheckCircle, XCircle, Loader2, Mail, RefreshCw } from "lucide-react";
 
 interface VerificationResult {
   success: boolean;
@@ -14,23 +16,34 @@ interface VerificationResult {
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
   const email = searchParams.get("email");
   
-  const [verificationStatus, setVerificationStatus] = useState<"loading" | "success" | "error" | "pending">("loading");
+  const [verificationStatus, setVerificationStatus] = useState<"pending" | "success" | "error">("pending");
   const [result, setResult] = useState<VerificationResult | null>(null);
-  const [isChecking, setIsChecking] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
-  const verifyEmail = async (verificationToken: string) => {
+  const verifyOtp = async () => {
+    if (!email || !otp || otp.length !== 6) {
+      setResult({
+        success: false,
+        message: "Please enter a valid 6-digit verification code.",
+      });
+      setVerificationStatus("error");
+      return;
+    }
+
+    setIsVerifying(true);
     try {
-      const response = await fetch("/api/verify-email", {
+      const response = await fetch("/api/verify-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
-          token: verificationToken,
-          type: 'email'
+          email: email,
+          otp: otp
         }),
       });
 
@@ -40,13 +53,10 @@ function VerifyEmailContent() {
         setVerificationStatus("success");
         setResult(data);
         
-        // If password is set, automatically log the user in
-        if (!data.passwordSetupRequired) {
-          // Auto-login the user and redirect to dashboard
-          setTimeout(() => {
-            window.location.href = "/?autoLogin=true&email=" + encodeURIComponent(email || "");
-          }, 2000);
-        }
+        // Redirect to dashboard after successful verification
+        setTimeout(() => {
+          window.location.href = "/?autoLogin=true&email=" + encodeURIComponent(email || "");
+        }, 2000);
       } else {
         setVerificationStatus("error");
         setResult(data);
@@ -57,56 +67,53 @@ function VerifyEmailContent() {
         success: false,
         message: "Network error. Please try again.",
       });
+    } finally {
+      setIsVerifying(false);
     }
   };
 
-  const checkVerificationStatus = async () => {
+  const resendOtp = async () => {
     if (!email) return;
     
-    setIsChecking(true);
+    setIsResending(true);
     try {
-      const response = await fetch(`/api/check-verification-status?email=${encodeURIComponent(email)}`);
+      const response = await fetch("/api/send-verification-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
       const data = await response.json();
       
-      if (response.ok && data.verified) {
-        setVerificationStatus("success");
-        setResult(data);
-      } else {
+      if (response.ok) {
+        setResult({
+          success: true,
+          message: "New verification code sent to your email.",
+        });
         setVerificationStatus("pending");
+        setOtp(""); // Clear the OTP input
+      } else {
+        setResult({
+          success: false,
+          message: data.message || "Failed to send verification code.",
+        });
+        setVerificationStatus("error");
       }
     } catch (error) {
-      console.error("Error checking verification status:", error);
-    } finally {
-      setIsChecking(false);
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      verifyEmail(token);
-    } else if (email) {
-      // If no token but email provided, check current status
-      checkVerificationStatus();
-    } else {
-      setVerificationStatus("error");
       setResult({
         success: false,
-        message: "Missing verification token or email address.",
+        message: "Network error. Please try again.",
       });
+      setVerificationStatus("error");
+    } finally {
+      setIsResending(false);
     }
-  }, [token, email]);
+  };
 
   const renderContent = () => {
     switch (verificationStatus) {
-      case "loading":
-        return (
-          <div className="text-center">
-            <Loader2 className="h-16 w-16 text-blue-600 animate-spin mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Verifying your email...</h2>
-            <p className="text-gray-600">Please wait while we verify your email address.</p>
-          </div>
-        );
-
       case "success":
         return (
           <div className="text-center">
@@ -115,9 +122,7 @@ function VerifyEmailContent() {
             <p className="text-gray-600 mb-4">
               Your email address has been successfully verified. Your DNS zones are now being monitored.
             </p>
-            <Button onClick={() => window.location.href = "/"}>
-              Go to Dashboard
-            </Button>
+            <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
           </div>
         );
 
@@ -130,44 +135,8 @@ function VerifyEmailContent() {
               {result?.message || "There was an error verifying your email address."}
             </p>
             <div className="space-y-2">
-              <Button onClick={() => window.location.href = "/"}>
+              <Button onClick={() => setVerificationStatus("pending")}>
                 Try Again
-              </Button>
-              {email && (
-                <Button variant="outline" onClick={checkVerificationStatus} disabled={isChecking}>
-                  {isChecking ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Checking...
-                    </>
-                  ) : (
-                    "Check Status"
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
-        );
-
-      case "pending":
-        return (
-          <div className="text-center">
-            <Mail className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Check Your Email</h2>
-            <p className="text-gray-600 mb-4">
-              We've sent a verification link to <strong>{email}</strong>. 
-              Please click the link in your email to verify your address.
-            </p>
-            <div className="space-y-2">
-              <Button onClick={checkVerificationStatus} disabled={isChecking}>
-                {isChecking ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Checking...
-                  </>
-                ) : (
-                  "I've Verified My Email"
-                )}
               </Button>
               <Button variant="outline" onClick={() => window.location.href = "/"}>
                 Back to Registration
@@ -176,10 +145,92 @@ function VerifyEmailContent() {
           </div>
         );
 
+      case "pending":
       default:
-        return null;
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <Mail className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Enter Verification Code</h2>
+              <p className="text-gray-600 mb-4">
+                We've sent a 6-digit verification code to <strong>{email}</strong>. 
+                Please enter the code below to verify your email address.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp">Verification Code</Label>
+                <Input
+                  id="otp"
+                  type="text"
+                  placeholder="123456"
+                  value={otp}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setOtp(value);
+                  }}
+                  maxLength={6}
+                  className="text-center text-2xl tracking-widest"
+                />
+              </div>
+
+              <Button 
+                onClick={verifyOtp} 
+                disabled={isVerifying || otp.length !== 6}
+                className="w-full"
+              >
+                {isVerifying ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  "Verify Email"
+                )}
+              </Button>
+
+              <div className="text-center">
+                <p className="text-sm text-gray-500 mb-2">Didn't receive the code?</p>
+                <Button 
+                  variant="outline" 
+                  onClick={resendOtp} 
+                  disabled={isResending}
+                  size="sm"
+                >
+                  {isResending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Resend Code
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
     }
   };
+
+  if (!email) {
+    return (
+      <div className="text-center">
+        <XCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold mb-2 text-red-600">Missing Email</h2>
+        <p className="text-gray-600 mb-4">
+          No email address provided for verification.
+        </p>
+        <Button onClick={() => window.location.href = "/"}>
+          Back to Registration
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
