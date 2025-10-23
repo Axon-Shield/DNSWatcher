@@ -49,16 +49,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use Supabase Auth to send OTP email
-    const { error: emailError } = await supabase.auth.signInWithOtp({
-      email: email,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/verify-email`
+    // Send OTP email via Supabase Edge Function
+    const { error: emailError } = await supabase.functions.invoke('send-email', {
+      body: {
+        to: email,
+        subject: 'DNSWatcher Email Verification Code',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Email Verification Code</h2>
+            <p>Your verification code is:</p>
+            <div style="background-color: #f5f5f5; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px; margin: 20px 0;">
+              ${otp}
+            </div>
+            <p>Enter this code in the verification page to complete your email verification.</p>
+            <p>This code will expire in 5 minutes.</p>
+            <p>If you didn't request this verification, please ignore this email.</p>
+          </div>
+        `
       }
     });
 
     if (emailError) {
-      console.error("Error sending verification email via Supabase:", emailError);
+      console.error("Error sending verification email via Supabase Edge Function:", emailError);
       return NextResponse.json(
         { message: "Failed to send verification email" },
         { status: 500 }
