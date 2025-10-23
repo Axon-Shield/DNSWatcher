@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const verifyEmailSchema = z.object({
   token: z.string().min(1),
-  type: z.string().optional(),
+  type: z.enum(['email']).optional(),
 });
 
 export async function POST(request: NextRequest) {

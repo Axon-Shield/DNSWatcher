@@ -50,7 +50,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Send email via Resend with the verification link
-    const verificationUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/verify-email?token=${authData.session?.access_token}&email=${encodeURIComponent(email)}`;
+    // Use a simple token approach since signInWithOtp doesn't return access_token
+    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const verificationUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
     
     const { error: emailError } = await resend.emails.send({
       from: FROM_EMAIL,
