@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,6 @@ interface VerificationResult {
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
-  
-  console.log("VerifyEmailContent rendered with email:", email);
   
   const [verificationStatus, setVerificationStatus] = useState<"pending" | "success" | "error">("pending");
   const [result, setResult] = useState<VerificationResult | null>(null);
@@ -221,15 +219,27 @@ function VerifyEmailContent() {
 
   if (!email) {
     return (
-      <div className="text-center">
-        <XCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold mb-2 text-red-600">Missing Email</h2>
-        <p className="text-gray-600 mb-4">
-          No email address provided for verification.
-        </p>
-        <Button onClick={() => window.location.href = "/"}>
-          Back to Registration
-        </Button>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Email Verification</CardTitle>
+            <CardDescription>
+              Verify your email address to start monitoring your DNS zones
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <XCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2 text-red-600">Missing Email</h2>
+              <p className="text-gray-600 mb-4">
+                No email address provided for verification.
+              </p>
+              <Button onClick={() => window.location.href = "/"}>
+                Back to Registration
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -252,5 +262,25 @@ function VerifyEmailContent() {
 }
 
 export default function VerifyEmailPage() {
-  return <VerifyEmailContent />;
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Email Verification</CardTitle>
+            <CardDescription>
+              Loading verification...
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
+  );
 }
