@@ -35,10 +35,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Supabase Auth user with password using signUp (more secure)
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Create Supabase Auth user via Admin API without sending confirmation email
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: email,
       password: password,
+      email_confirm: true, // prevent Supabase from sending a magic link
     });
 
     if (authError) {
