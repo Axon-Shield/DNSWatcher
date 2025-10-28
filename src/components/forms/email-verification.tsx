@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Mail, CheckCircle, Loader2, RefreshCw } from "lucide-react";
+import { CheckCircle, Loader2, RefreshCw, Mail } from "lucide-react";
 
 interface EmailVerificationProps {
   email: string;
@@ -13,42 +15,56 @@ interface EmailVerificationProps {
 }
 
 export default function EmailVerification({ email, onVerified, onBack }: EmailVerificationProps) {
-  const [isChecking, setIsChecking] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [emailSent, setEmailSent] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const checkVerificationStatus = async () => {
-    setIsChecking(true);
+  const verifyOtp = async () => {
+    if (!otp || otp.length !== 6) {
+      setError("Please enter a valid 6-digit verification code.");
+      return;
+    }
+
+    setIsVerifying(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/check-verification-status", {
+      const response = await fetch("/api/verify-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ 
+          email: email,
+          otp: otp
+        }),
       });
 
-      const result = await response.json();
-
-      if (response.ok && result.verified) {
+      const data = await response.json();
+      
+      if (response.ok) {
         setIsVerified(true);
-        // Auto-redirect after a short delay
+        setSuccessMessage("Email verified successfully! Activating DNS monitoring...");
+        
+        // Redirect after successful verification
         setTimeout(() => {
           onVerified();
         }, 2000);
+      } else {
+        setError(data.message || "Verification failed. Please try again.");
       }
     } catch (error) {
-      console.error("Error checking verification status:", error);
+      setError("Network error. Please try again.");
     } finally {
-      setIsChecking(false);
+      setIsVerifying(false);
     }
   };
 
-  const sendVerificationEmail = async () => {
-    setIsChecking(true);
+  const resendOtp = async () => {
+    setIsResending(true);
     setError(null);
 
     try {
@@ -60,36 +76,20 @@ export default function EmailVerification({ email, onVerified, onBack }: EmailVe
         body: JSON.stringify({ email }),
       });
 
-      const result = await response.json();
-
+      const data = await response.json();
+      
       if (response.ok) {
-        setEmailSent(true);
+        setSuccessMessage("New verification code sent to your email!");
+        setOtp(""); // Clear the OTP input
       } else {
-        setError(result.message || "Failed to send verification email");
+        setError(data.message || "Failed to send verification code.");
       }
     } catch (error) {
-      console.error("Error sending verification email:", error);
-      setError("Failed to send verification email");
+      setError("Failed to send verification code. Please try again.");
     } finally {
-      setIsChecking(false);
+      setIsResending(false);
     }
   };
-
-  // Auto-check verification status every 5 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!isVerified) {
-        checkVerificationStatus();
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [isVerified]);
-
-  // Send initial verification email
-  useEffect(() => {
-    sendVerificationEmail();
-  }, []);
 
   if (isVerified) {
     return (
@@ -100,7 +100,7 @@ export default function EmailVerification({ email, onVerified, onBack }: EmailVe
           </div>
           <CardTitle className="text-green-600">Email Verified!</CardTitle>
           <CardDescription>
-            Your email has been verified successfully. Redirecting to your DNS zone...
+            {successMessage || "Your email has been verified successfully. Redirecting to your DNS zone..."}
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
@@ -118,9 +118,10 @@ export default function EmailVerification({ email, onVerified, onBack }: EmailVe
         <div className="flex justify-center mb-4">
           <Mail className="h-16 w-16 text-blue-600" />
         </div>
-        <CardTitle className="text-blue-600">Verify Your Email</CardTitle>
+        <CardTitle className="text-blue-600">Enter Verification Code</CardTitle>
         <CardDescription>
-          We've sent a verification link to <strong>{email}</strong>
+          We've sent a 6-digit verification code to <strong>{email}</strong>. 
+          Please enter the code below.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -132,46 +133,65 @@ export default function EmailVerification({ email, onVerified, onBack }: EmailVe
           </Alert>
         )}
 
-        {emailSent && (
+        {successMessage && (
           <Alert className="border-green-200 bg-green-50">
             <AlertDescription className="text-green-800">
-              Verification email sent! Please check your inbox and spam folder.
+              {successMessage}
             </AlertDescription>
           </Alert>
         )}
 
-        <div className="text-center space-y-4">
-          <p className="text-sm text-gray-600">
-            Click the verification link in your email to activate DNS monitoring.
-            We'll automatically detect when you've verified your email.
-          </p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="otp">Verification Code</Label>
+            <Input
+              id="otp"
+              type="text"
+              placeholder="123456"
+              value={otp}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                setOtp(value);
+              }}
+              maxLength={6}
+              className="text-center text-2xl tracking-widest"
+            />
+          </div>
 
-          <div className="flex space-x-2">
-            <Button
-              onClick={checkVerificationStatus}
-              disabled={isChecking}
-              className="flex-1"
+          <Button 
+            onClick={verifyOtp} 
+            disabled={isVerifying || otp.length !== 6}
+            className="w-full"
+          >
+            {isVerifying ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              "Verify Email"
+            )}
+          </Button>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-500 mb-2">Didn't receive the code?</p>
+            <Button 
+              variant="outline" 
+              onClick={resendOtp} 
+              disabled={isResending}
+              size="sm"
             >
-              {isChecking ? (
+              {isResending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Checking...
+                  Sending...
                 </>
               ) : (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4" />
-                  Check Now
+                  Resend Code
                 </>
               )}
-            </Button>
-
-            <Button
-              onClick={sendVerificationEmail}
-              disabled={isChecking}
-              variant="outline"
-              className="flex-1"
-            >
-              Resend Email
             </Button>
           </div>
 
@@ -181,21 +201,11 @@ export default function EmailVerification({ email, onVerified, onBack }: EmailVe
               variant="ghost"
               className="w-full"
               onClick={onBack}
-              disabled={isChecking}
+              disabled={isVerifying || isResending}
             >
               Back
             </Button>
           )}
-        </div>
-
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 className="font-medium text-blue-900 mb-2">What happens next?</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Check your email for the verification link</li>
-            <li>• Click the link to verify your email</li>
-            <li>• DNS monitoring will automatically activate</li>
-            <li>• You'll be redirected to your zone dashboard</li>
-          </ul>
         </div>
       </CardContent>
     </Card>

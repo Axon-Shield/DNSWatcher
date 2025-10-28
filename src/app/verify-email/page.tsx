@@ -53,9 +53,20 @@ function VerifyEmailContent() {
         setVerificationStatus("success");
         setResult(data);
         
-        // Redirect to dashboard after successful verification
+        // Redirect to zone page after successful verification
         setTimeout(() => {
-          window.location.href = "/?autoLogin=true&email=" + encodeURIComponent(email || "");
+          // Get the zone from the URL params or localStorage
+          const zone = new URLSearchParams(window.location.search).get("zone") || 
+                       localStorage.getItem("pending_zone") || "";
+          
+          if (zone) {
+            window.location.href = "/?autoLogin=true&email=" + encodeURIComponent(email || "") + "&zone=" + encodeURIComponent(zone);
+          } else {
+            window.location.href = "/?autoLogin=true&email=" + encodeURIComponent(email || "");
+          }
+          
+          // Clear any pending zone from localStorage
+          localStorage.removeItem("pending_zone");
         }, 2000);
       } else {
         setVerificationStatus("error");
