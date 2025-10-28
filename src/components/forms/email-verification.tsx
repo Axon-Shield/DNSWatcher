@@ -66,14 +66,7 @@ export default function EmailVerification({ email, onVerified, onBack }: EmailVe
               await loginRes.json().catch(() => ({}));
             }
 
-            const searchParams = new URLSearchParams(window.location.search);
-            const zone = searchParams.get("zone") || localStorage.getItem("pending_zone") || "";
-            const redirectUrl = zone
-              ? `/?autoLogin=true&email=${encodeURIComponent(email)}&zone=${encodeURIComponent(zone)}`
-              : `/?autoLogin=true&email=${encodeURIComponent(email)}`;
-
-            // Clear pending zone hint before redirect
-            localStorage.removeItem("pending_zone");
+            const redirectUrl = `/?autoLogin=true&email=${encodeURIComponent(email)}`;
             window.location.href = redirectUrl;
           } catch {
             onVerified();
