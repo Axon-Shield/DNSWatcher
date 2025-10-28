@@ -15,7 +15,7 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - **User Authentication**: Login system with email + DNS zone authentication
 - **Smart High-Frequency Monitoring**: Background task checks SOA records every 30 seconds
 - **Intelligent Change Detection**: Smart filtering prevents notification spam
-- **Email Notifications**: Real-time security alerts via Resend API
+- **Email Notifications**: Real-time security alerts via Supabase Edge Function + Resend SMTP
 - **Historical Tracking**: Complete audit trail of all DNS checks
 - **Zone Management**: Users can remove and re-enable zones
 - **Subscription Tiers**: Free (1 zone) and Pro (unlimited) tiers
@@ -27,7 +27,7 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - **Backend**: Next.js API routes + Supabase Edge Functions
 - **Database**: Supabase PostgreSQL with Row Level Security
 - **Automation**: pg_cron for scheduled tasks (every 30 seconds)
-- **Email**: Resend API integration via Supabase Edge Functions
+- **Email**: Supabase Edge Functions using Resend SMTP (no direct Resend API in app code)
 - **Version Control**: GitHub MCP integration
 
 ## Architecture
@@ -36,7 +36,7 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - **User Authentication**: Login system with email + DNS zone
 - **User Dashboard**: Zone management and SOA history viewing
 - **Background Monitoring**: Automated SOA record checking every 30 seconds with smart filtering
-- **Notification System**: Email alerts via Resend API
+- **Notification System**: Email alerts via Supabase Edge Functions
 - **Zone Management**: Remove and re-enable zones functionality
 
 ## Security Features
@@ -75,7 +75,9 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - `src/app/api/register/route.ts` - Registration API with zone reactivation
 - `src/app/api/login/route.ts` - Login API endpoint
 - `src/app/api/remove-zone/route.ts` - Zone removal API
-- `src/app/api/verify-email/route.ts` - Email verification API
+- OTP-only email verification:
+  - `src/app/api/send-verification-email/route.ts` - Generate/store OTP and send via Edge Function
+  - `src/app/api/verify-otp/route.ts` - Validate OTP, confirm email, activate zones
 - `src/app/api/cron/dns-monitor/route.ts` - DNS monitoring cron job
 - `docs/SUPABASE_SETUP.md` - Complete setup guide
 - `context/` - AI context files for development

@@ -1,12 +1,12 @@
 # User Management and Authentication Context
 
 ## User Registration Flow
-### Multi-Step Registration Process
+### Multi-Step Registration Process (OTP-only)
 1. **Form Submission**: User enters email and DNS zone
 2. **Password Setup**: New users must set a secure password
-3. **Email Verification**: Users receive confirmation email after password setup
-4. **Zone Activation**: Zones activated only after email verification
-5. **Auto-Login**: Users automatically logged in after verification
+3. **Email Verification (OTP)**: User receives a 6-digit OTP code via email
+4. **Zone Activation**: Zones activate after successful OTP verification
+5. **Auto-Login**: User is redirected to dashboard with auto-login
 
 ### Registration API (`/api/register`)
 - **Input Validation**: Zod schema validation
@@ -20,7 +20,7 @@
 1. **Registration**: User registers with email and DNS zone
 2. **Password Creation**: User sets secure password via `PasswordSetup` component
 3. **Supabase Auth**: Creates user in Supabase Auth with password
-4. **Email Verification**: Triggers email verification process
+4. **Email Verification**: Triggers OTP email workflow
 5. **Auto-Login**: User automatically logged in after verification
 
 ### Password Setup API (`/api/setup-password`)
@@ -50,31 +50,17 @@
 - **Security**: Validates reset token and user ownership
 - **Response**: Success confirmation
 
-## Email Verification System
-### Resend-Only Verification Process
-- **Resend API**: Uses Resend API exclusively for all email sending
-- **Custom Tokens**: Generates secure verification tokens (no Supabase Auth dependency)
-- **Status Sync**: Manages verification status in users table
-- **Zone Activation**: Zones become active after verification
-- **Auto-Login**: Users automatically logged in after verification
+## Email Verification System (OTP)
+### OTP Verification Process
+- **Email Delivery**: Supabase Edge Function (`send-email`) sends OTP code
+- **OTP Storage**: `users.verification_otp` and `users.otp_expires_at` hold code and expiry
+- **Validation**: `/api/verify-otp` validates the code and marks email confirmed
+- **Zone Activation**: Activates user zones upon successful verification
+- **Auto-Login**: Redirects with `autoLogin=true` and optional `zone` parameter
 
-### Verification API (`/api/verify-email`)
-- **Custom Token**: Validates custom verification tokens (not Supabase Auth tokens)
-- **User Update**: Sets `email_confirmed: true` in users table
-- **Zone Activation**: Activates zones if password is set
-- **Auto-Login**: Triggers auto-login if password is set
-
-### Verification Status API (`/api/check-verification-status`)
-- **Users Table Check**: Checks verification status in users table
-- **Supabase Auth Sync**: Syncs with Supabase Auth if needed
-- **Zone Activation**: Auto-activates zones when verification detected
-- **Response**: Returns verification status and password setup requirement
-
-### Send Verification Email API (`/api/send-verification-email`)
-- **Resend Integration**: Uses Resend API exclusively for email sending
-- **Custom Tokens**: Generates secure verification tokens
-- **Professional Template**: HTML email template with verification link
-- **No Supabase Auth**: Completely independent of Supabase Auth email system
+### APIs
+- **Send OTP** (`/api/send-verification-email`): Generates 6-digit OTP, stores it, invokes `send-email` Edge Function with text+html content
+- **Verify OTP** (`/api/verify-otp`): Validates OTP, confirms email, activates zones, clears OTP fields
 
 ## Auto-Login System
 ### Auto-Login After Verification

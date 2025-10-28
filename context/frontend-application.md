@@ -73,14 +73,13 @@ DNSWatcher uses Next.js 14 with the App Router for modern React development patt
   - Uses Supabase Auth password reset
 
 ### Email Verification Form (`src/components/forms/email-verification.tsx`)
-- **Purpose**: Users verify email after password setup
-- **Auto-Checking**: Automatically checks verification status
-- **Manual Check**: "Check Now" button for manual verification
-- **Resend**: Option to resend verification email
+- **Purpose**: Users verify email via 6-digit OTP after password setup
+- **OTP Input**: 6-digit code entry with paste support
+- **Resend**: Option to resend verification code
 - **Features**:
-  - Real-time status checking
-  - Professional UI with loading states
-  - Auto-progression after verification
+  - Clear error/success states
+  - Verifies via `/api/verify-otp`
+  - Redirects to dashboard (with zone) after success
 
 ### User Dashboard (`src/components/user-dashboard.tsx`)
 - **Purpose**: Display user's monitoring dashboard
@@ -135,17 +134,16 @@ DNSWatcher uses Next.js 14 with the App Router for modern React development patt
 - **Response**: Success message with zone name
 - **Features**: Soft delete (sets `is_active: false`)
 
-### Email Verification API (`/api/verify-email`)
+### Verify OTP API (`/api/verify-otp`)
 - **Method**: POST
-- **Payload**: `{ token: string, email: string }`
-- **Response**: Verification success/failure
-- **Features**: Activates zones after email confirmation
+- **Payload**: `{ email: string, otp: string }`
+- **Response**: `{ success: boolean, message: string }`
+- **Features**: Confirms email, activates zones, auto-login
 
-### Verification Status API (`/api/check-verification-status`)
-- **Method**: GET
-- **Query**: `?email={email}`
-- **Response**: Verification status
-- **Features**: Check if user has verified email
+### Send Verification Email API (`/api/send-verification-email`)
+- **Method**: POST
+- **Payload**: `{ email: string }`
+- **Features**: Generates/stores OTP, invokes `send-email` Edge Function with text+html
 
 ### Cron API (`/api/cron/dns-monitor`)
 - **Purpose**: DNS monitoring automation
