@@ -49,10 +49,36 @@ export default function EmailVerification({ email, onVerified, onBack }: EmailVe
         setIsVerified(true);
         setSuccessMessage("Email verified successfully! Activating DNS monitoring...");
         
-        // Redirect after successful verification
-        setTimeout(() => {
-          onVerified();
-        }, 2000);
+        // After verification, ensure user is logged in, then redirect to zone view
+        setTimeout(async () => {
+          try {
+            // If server indicates a session is missing, perform auto-login bootstrap
+            if (data.requiresLogin) {
+              const loginRes = await fetch("/api/auto-login-after-verification", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email }),
+              });
+
+              // Continue with redirect even if this call fails; UX fallback to homepage
+              await loginRes.json().catch(() => ({}));
+            }
+
+            const searchParams = new URLSearchParams(window.location.search);
+            const zone = searchParams.get("zone") || localStorage.getItem("pending_zone") || "";
+            const redirectUrl = zone
+              ? `/?autoLogin=true&email=${encodeURIComponent(email)}&zone=${encodeURIComponent(zone)}`
+              : `/?autoLogin=true&email=${encodeURIComponent(email)}`;
+
+            // Clear pending zone hint before redirect
+            localStorage.removeItem("pending_zone");
+            window.location.href = redirectUrl;
+          } catch {
+            onVerified();
+          }
+        }, 1500);
       } else {
         setError(data.message || "Verification failed. Please try again.");
       }

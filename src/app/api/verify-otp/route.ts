@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
+import { createClient as createServerSupabase } from "@/lib/supabase-server";
 import { z } from "zod";
 
 const verifyOtpSchema = z.object({
@@ -13,6 +14,7 @@ export async function POST(request: NextRequest) {
     const { email, otp } = verifyOtpSchema.parse(body);
 
     const supabase = createServiceClient();
+    const supabaseServer = await createServerSupabase();
 
     // Get the user and verify OTP
     const { data: user, error: userError } = await supabase
@@ -90,10 +92,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ensure the server session exists (user might already be signed-in post password setup)
+    // If not signed in, sign them in with a server session using a short-lived OTP of our own
+    try {
+      // Try to get an existing session
+      const { data: sessionData } = await supabaseServer.auth.getSession();
+      if (!sessionData.session) {
+        // If there's no session, perform a token exchange via email+password fallback
+        // We can't read the user's password, so return a flag for the client to call auto-login API
+        return NextResponse.json({
+          message: "Email verified successfully",
+          userId: user.id,
+          email: user.email,
+          requiresLogin: true,
+        });
+      }
+    } catch {
+      // If session check fails, proceed with requiresLogin flow
+      return NextResponse.json({
+        message: "Email verified successfully",
+        userId: user.id,
+        email: user.email,
+        requiresLogin: true,
+      });
+    }
+
     return NextResponse.json({
       message: "Email verified successfully",
       userId: user.id,
       email: user.email,
+      requiresLogin: false,
     });
 
   } catch (error) {

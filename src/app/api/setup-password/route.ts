@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
+import { createClient as createServerSupabase } from "@/lib/supabase-server";
 import { z } from "zod";
 
 const passwordSetupSchema = z.object({
@@ -13,6 +14,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = passwordSetupSchema.parse(body);
 
     const supabase = createServiceClient();
+    const supabaseServer = await createServerSupabase();
 
     // Get the user
     const { data: user, error: userError } = await supabase
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update user with password set flag (but keep email_confirmed as false until verified)
+    // Update user with password set flag (but keep app-level email_confirmed as false until OTP verified)
     const { error: updateError } = await supabase
       .from("users")
       .update({
@@ -65,6 +67,19 @@ export async function POST(request: NextRequest) {
         password_set_at: new Date().toISOString(),
       })
       .eq("id", user.id);
+    // Create an authenticated session cookie so the user is logged in immediately
+    try {
+      const { error: signInError } = await supabaseServer.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (signInError) {
+        console.warn("Sign-in after password setup failed (will still proceed with OTP flow):", signInError.message);
+      }
+    } catch (e) {
+      console.warn("Unexpected error during immediate sign-in:", e);
+    }
+
 
     if (updateError) {
       console.error("Error updating user password status:", updateError);
