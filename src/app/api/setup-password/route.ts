@@ -74,8 +74,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Auto-send OTP verification email after password setup
+    try {
+      // Generate a 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Store OTP with 5-minute expiration
+      const { error: otpError } = await supabase
+        .from("users")
+        .update({
+          verification_otp: otp,
+          otp_expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        })
+        .eq("id", user.id);
+
+      if (otpError) {
+        console.error("Error storing OTP after password setup:", otpError);
+      } else {
+        // Send OTP via Edge Function
+        const { error: emailError } = await supabase.functions.invoke('send-email', {
+          body: {
+            to: email,
+            subject: 'DNSWatcher Email Verification Code',
+            text: `DNSWatcher Email Verification Code\n\nYour verification code is: ${otp}\n\nEnter this code in the verification page to complete your email verification.\n\nThis code will expire in 5 minutes.\n\nIf you didn't request this verification, please ignore this email.`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2>Email Verification Code</h2>
+                <p>Your verification code is:</p>
+                <div style="background-color: #f5f5f5; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px; margin: 20px 0;">
+                  ${otp}
+                </div>
+                <p>Enter this code in the verification page to complete your email verification.</p>
+                <p>This code will expire in 5 minutes.</p>
+                <p>If you didn't request this verification, please ignore this email.</p>
+              </div>
+            `,
+          },
+        });
+
+        if (emailError) {
+          console.error('Error sending OTP email after password setup:', emailError);
+        }
+      }
+    } catch (e) {
+      console.error('Unexpected error while auto-sending OTP:', e);
+    }
+
     return NextResponse.json({
-      message: "Password set successfully. Please verify your email to activate DNS monitoring.",
+      message: "Password set successfully. Verification code has been sent to your email.",
       userId: user.id,
       emailVerificationRequired: true,
     });
