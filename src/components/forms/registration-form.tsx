@@ -124,7 +124,7 @@ export default function RegistrationForm({ onSuccess, onRedirectToLogin }: Regis
         email={userEmail}
         onPasswordSet={handlePasswordSet}
         onEmailVerificationRequired={handleEmailVerificationRequired}
-        onBack={() => setVerificationStep("email-sent")}
+        onBack={() => setVerificationStep("form")}
       />
     );
   }
