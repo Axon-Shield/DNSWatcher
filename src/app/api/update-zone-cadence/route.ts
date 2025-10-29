@@ -60,10 +60,18 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Update zone cadence
+    // Update zone cadence and recalculate next_check_at
+    // If zone was already checked, schedule next check at NOW() + new cadence
+    // If zone hasn't been checked yet, keep existing next_check_at but update cadence
+    const now = new Date();
+    const nextCheckAt = new Date(now.getTime() + checkCadenceSeconds * 1000).toISOString();
+    
     const { error: updateError } = await supabase
       .from("dns_zones")
-      .update({ check_cadence_seconds: checkCadenceSeconds })
+      .update({ 
+        check_cadence_seconds: checkCadenceSeconds,
+        next_check_at: nextCheckAt // Recalculate immediately when cadence changes
+      })
       .eq("id", zoneId);
 
     if (updateError) {

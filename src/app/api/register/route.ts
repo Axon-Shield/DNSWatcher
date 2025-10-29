@@ -130,13 +130,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Create DNS zone with default 60-second cadence (1 minute)
+    const defaultCadence = 60;
+    const nextCheckAt = new Date(Date.now() + defaultCadence * 1000).toISOString();
+    
     const { data: newZone, error: newZoneError } = await supabase
       .from("dns_zones")
       .insert({
         user_id: userId,
         zone_name: dnsZone,
         is_active: true,
-        check_cadence_seconds: 60, // Default 1 minute
+        check_cadence_seconds: defaultCadence,
+        next_check_at: nextCheckAt, // Schedule first check in 60 seconds
       })
       .select()
       .single();
@@ -169,11 +173,15 @@ export async function POST(request: NextRequest) {
         };
 
         // Do not create a history record; just set baseline fields on the zone
+        const now = new Date().toISOString();
+        const nextCheck = new Date(Date.now() + defaultCadence * 1000).toISOString();
+        
         await supabase
           .from("dns_zones")
           .update({
-            last_checked: new Date().toISOString(),
+            last_checked: now,
             last_soa_serial: soaRecord.serial,
+            next_check_at: nextCheck, // Schedule next check based on cadence
           })
           .eq("id", newZone.id);
       }
