@@ -231,7 +231,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         <Alert>
           <Crown className="h-4 w-4" />
           <AlertDescription>
-            You're on the free plan (1 DNS zone). 
+            You're on the free plan (2 DNS zones). 
             <Link href="/upgrade">
               <Button variant="link" className="p-0 h-auto ml-1">
                 Upgrade to Pro for unlimited monitoring

@@ -75,6 +75,33 @@ export async function POST(request: NextRequest) {
       userId = newUser.id;
     }
 
+    // Check user's zone limit
+    const user = existingUser || (await supabase.from("users").select("*").eq("id", userId).single()).data;
+    if (!user) {
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check current active zone count
+    const { count: activeZoneCount } = await supabase
+      .from("dns_zones")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("is_active", true);
+
+    // Check if user has reached their zone limit (only for free tier)
+    if (user.subscription_tier === "free" && activeZoneCount && activeZoneCount >= (user.max_zones || 2)) {
+      return NextResponse.json(
+        { 
+          message: `You've reached your free tier limit of ${user.max_zones || 2} DNS zones. Upgrade to Pro for unlimited zones.`,
+          upgradeRequired: true
+        },
+        { status: 403 }
+      );
+    }
+
     // Check if zone already exists for this user
     const { data: existingZone, error: zoneError } = await supabase
       .from("dns_zones")
