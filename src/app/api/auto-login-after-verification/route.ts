@@ -74,9 +74,21 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email,
         subscription_tier: user.subscription_tier,
+        max_zones: user.max_zones,
       },
-      currentZone: currentZone,
-      allZones: zones,
+      currentZone: {
+        id: currentZone.id,
+        zone_name: currentZone.zone_name,
+        created_at: currentZone.created_at,
+        last_checked: currentZone.last_checked,
+        check_cadence_seconds: currentZone.check_cadence_seconds || 60,
+      },
+      allZones: zones.map(zone => ({
+        id: zone.id,
+        zone_name: zone.zone_name,
+        created_at: zone.created_at,
+        last_checked: zone.last_checked,
+      })),
       zoneHistory: zoneHistory || [],
     });
 

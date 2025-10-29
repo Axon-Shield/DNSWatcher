@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
         zone_name: currentZone.zone_name,
         created_at: currentZone.created_at,
         last_checked: currentZone.last_checked,
+        check_cadence_seconds: currentZone.check_cadence_seconds || 60,
       },
       zoneHistory: zoneHistory || [],
       allZones: allZones || [],

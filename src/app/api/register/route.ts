@@ -102,13 +102,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create DNS zone
+    // Create DNS zone with default 60-second cadence (1 minute)
     const { data: newZone, error: newZoneError } = await supabase
       .from("dns_zones")
       .insert({
         user_id: userId,
         zone_name: dnsZone,
         is_active: true,
+        check_cadence_seconds: 60, // Default 1 minute
       })
       .select()
       .single();

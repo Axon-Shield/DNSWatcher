@@ -15,7 +15,8 @@ import {
   CheckCircle,
   Loader2,
   Filter,
-  TrendingUp
+  TrendingUp,
+  Settings
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Dot } from 'recharts';
 import { format, subDays, subWeeks, subMonths, isWithinInterval } from 'date-fns';
@@ -34,6 +35,7 @@ interface Zone {
   zone_name: string;
   created_at: string;
   last_checked: string;
+  check_cadence_seconds?: number;
 }
 
 interface User {
@@ -62,6 +64,8 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   const [removingZone, setRemovingZone] = useState<string | null>(null);
   const [removedZoneName, setRemovedZoneName] = useState<string | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('7d');
+  const [updatingCadence, setUpdatingCadence] = useState(false);
+  const [currentCadence, setCurrentCadence] = useState<number>(data.currentZone.check_cadence_seconds || 60);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -147,6 +151,48 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
 
   const isPro = data.user.subscription_tier === 'pro';
 
+  // Available cadence options based on tier
+  const cadenceOptions = isPro 
+    ? [1, 5, 15, 30, 60] // Pro: 1s, 5s, 15s, 30s, 60s
+    : [30, 60]; // Free: 30s, 60s
+
+  const formatCadence = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    return `${seconds / 60}m`;
+  };
+
+  const updateCadence = async (newCadence: number) => {
+    if (newCadence === currentCadence) return;
+    
+    setUpdatingCadence(true);
+    try {
+      const response = await fetch("/api/update-zone-cadence", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.user.email,
+          zoneId: data.currentZone.id,
+          checkCadenceSeconds: newCadence,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to update cadence");
+      }
+
+      setCurrentCadence(newCadence);
+    } catch (error) {
+      console.error("Error updating cadence:", error);
+      alert(error instanceof Error ? error.message : "Failed to update cadence");
+    } finally {
+      setUpdatingCadence(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Success Message */}
@@ -206,29 +252,60 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span className="text-sm text-green-600">Active Monitoring</span>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-green-600">Active Monitoring</span>
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => removeZone(data.currentZone.id)}
+                disabled={removingZone === data.currentZone.id}
+              >
+                {removingZone === data.currentZone.id ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Removing...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Remove Zone
+                  </>
+                )}
+              </Button>
             </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => removeZone(data.currentZone.id)}
-              disabled={removingZone === data.currentZone.id}
-            >
-              {removingZone === data.currentZone.id ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Removing...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Remove Zone
-                </>
-              )}
-            </Button>
+            
+            {/* Check Cadence Selector */}
+            <div className="flex items-center justify-between pt-2 border-t">
+              <div className="flex items-center space-x-2">
+                <Settings className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium">Check Frequency:</span>
+                <span className="text-sm text-gray-600">Currently: {formatCadence(currentCadence)}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                {cadenceOptions.map((cadence) => (
+                  <Button
+                    key={cadence}
+                    variant={currentCadence === cadence ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => updateCadence(cadence)}
+                    disabled={updatingCadence}
+                    className="text-xs"
+                  >
+                    {formatCadence(cadence)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            {!isPro && (
+              <div className="text-xs text-gray-500 flex items-center space-x-1">
+                <Crown className="h-3 w-3" />
+                <span>Upgrade to Pro for 1s, 5s, and 15s cadence options</span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
