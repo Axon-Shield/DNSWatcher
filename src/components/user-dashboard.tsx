@@ -17,8 +17,10 @@ import {
   Filter,
   TrendingUp,
   Settings,
-  Lock
+  Lock,
+  ArrowRight
 } from "lucide-react";
+import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Dot } from 'recharts';
 import { format, subDays, subWeeks, subMonths, isWithinInterval } from 'date-fns';
 
@@ -230,9 +232,11 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
           <Crown className="h-4 w-4" />
           <AlertDescription>
             You're on the free plan (1 DNS zone). 
-            <Button variant="link" className="p-0 h-auto ml-1">
-              Upgrade to Pro for unlimited monitoring
-            </Button>
+            <Link href="/upgrade">
+              <Button variant="link" className="p-0 h-auto ml-1">
+                Upgrade to Pro for unlimited monitoring
+              </Button>
+            </Link>
           </AlertDescription>
         </Alert>
       )}
@@ -292,50 +296,68 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                   </div>
                 )}
               </div>
-              <div className="flex items-center space-x-2">
-                {allCadences.map((cadence) => {
-                  const isSelectable = selectableCadences.includes(cadence);
-                  const isActive = currentCadence === cadence;
-                  const isProOnly = !isSelectable;
-                  return (
-                    <button
-                      key={cadence}
-                      onClick={() => {
-                        if (isSelectable && !updatingCadence) {
-                          updateCadence(cadence);
-                        } else if (!updatingCadence) {
-                          // Show upgrade message
-                          alert('Upgrade to Pro to unlock faster check frequencies (30s, 15s, 1s)');
-                        }
-                      }}
-                      disabled={updatingCadence || (!isSelectable)}
-                      className={
-                        `relative h-12 w-16 rounded-md border-2 transition-all flex items-center justify-center text-sm font-medium ` +
-                        (isSelectable
-                          ? (isActive 
-                              ? 'bg-black text-white border-black shadow-md' 
-                              : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-900 hover:border-gray-400')
-                          : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-75')
-                      }
-                      aria-label={`Set cadence to ${formatCadence(cadence)}${isProOnly ? ' (Pro only)' : ''}`}
-                    >
-                      {/* Pro Badge - Top Right Corner */}
-                      {isProOnly && (
-                        <div className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full p-0.5 shadow-sm">
-                          <Crown className="h-3 w-3 text-white" />
-                        </div>
-                      )}
-                      <span>{formatCadence(cadence)}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {!isPro && (
-                <div className="mt-3 text-xs text-amber-600 flex items-center space-x-1">
-                  <Crown className="h-3 w-3" />
-                  <span>Faster checks (30s, 15s, 1s) are available with Pro</span>
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  {allCadences.map((cadence) => {
+                    const isSelectable = selectableCadences.includes(cadence);
+                    const isActive = currentCadence === cadence;
+                    const isProOnly = !isSelectable;
+                    return (
+                      <div key={cadence} className="relative group">
+                        <button
+                          onClick={() => {
+                            if (isSelectable && !updatingCadence) {
+                              updateCadence(cadence);
+                            }
+                          }}
+                          disabled={updatingCadence || (!isSelectable)}
+                          className={
+                            `relative h-12 w-16 rounded-md border-2 transition-all flex items-center justify-center text-sm font-medium ` +
+                            (isSelectable
+                              ? (isActive 
+                                  ? 'bg-blue-600 text-white border-blue-600 shadow-md hover:bg-blue-700' 
+                                  : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-900 hover:border-gray-400')
+                              : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-75 hover:bg-gray-100')
+                          }
+                          aria-label={`Set cadence to ${formatCadence(cadence)}${isProOnly ? ' (Pro only)' : ''}`}
+                        >
+                          {/* Pro Badge - Top Right Corner */}
+                          {isProOnly && (
+                            <div className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full p-0.5 shadow-sm z-10">
+                              <Crown className="h-3 w-3 text-white" />
+                            </div>
+                          )}
+                          <span>{formatCadence(cadence)}</span>
+                        </button>
+                        {/* Hover Tooltip for Pro Only */}
+                        {isProOnly && (
+                          <div className="absolute z-20 hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2">
+                            <div className="bg-gray-900 text-white text-xs rounded-md py-2 px-3 shadow-lg whitespace-nowrap">
+                              <div className="flex items-center space-x-1 mb-1">
+                                <Crown className="h-3 w-3 text-amber-400" />
+                                <span className="font-semibold">Pro Feature</span>
+                              </div>
+                              <p className="text-gray-300">Faster checks (30s, 15s, 1s) are available with Pro</p>
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                                <div className="border-4 border-transparent border-t-gray-900"></div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+                {!isPro && (
+                  <Link href="/upgrade">
+                    <Button size="sm" className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-sm">
+                      <Crown className="h-3.5 w-3.5 mr-1.5" />
+                      Upgrade Now
+                      <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                    </Button>
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
