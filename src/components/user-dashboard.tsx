@@ -279,45 +279,64 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
             </div>
             
             {/* Check Cadence Selector */}
-            <div className="flex items-center justify-between pt-2 border-t">
-              <div className="flex items-center space-x-2">
-                <Settings className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium">Check Frequency:</span>
-                <span className="text-sm text-gray-600">Currently: {formatCadence(currentCadence)}</span>
+            <div className="pt-2 border-t">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <Settings className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-medium">Check Frequency</span>
+                </div>
+                {updatingCadence && (
+                  <div className="flex items-center space-x-2 text-xs text-gray-500">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </div>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 {allCadences.map((cadence) => {
                   const isSelectable = selectableCadences.includes(cadence);
                   const isActive = currentCadence === cadence;
+                  const isProOnly = !isSelectable;
                   return (
                     <button
                       key={cadence}
-                      onClick={() => (isSelectable && !updatingCadence ? updateCadence(cadence) : alert('Upgrade to Pro to unlock this cadence'))}
+                      onClick={() => {
+                        if (isSelectable && !updatingCadence) {
+                          updateCadence(cadence);
+                        } else if (!updatingCadence) {
+                          // Show upgrade message
+                          alert('Upgrade to Pro to unlock faster check frequencies (30s, 15s, 1s)');
+                        }
+                      }}
                       disabled={updatingCadence || (!isSelectable)}
                       className={
-                        `h-10 w-16 rounded-md border transition-colors flex items-center justify-center text-sm ` +
+                        `relative h-12 w-16 rounded-md border-2 transition-all flex items-center justify-center text-sm font-medium ` +
                         (isSelectable
-                          ? (isActive ? 'bg-black text-white border-black' : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-900')
-                          : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed')
+                          ? (isActive 
+                              ? 'bg-black text-white border-black shadow-md' 
+                              : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-900 hover:border-gray-400')
+                          : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-75')
                       }
-                      aria-label={`Set cadence to ${formatCadence(cadence)}`}
+                      aria-label={`Set cadence to ${formatCadence(cadence)}${isProOnly ? ' (Pro only)' : ''}`}
                     >
-                      <div className="flex items-center space-x-1">
-                        {!isSelectable && <Lock className="h-3.5 w-3.5" />}
-                        <span>{formatCadence(cadence)}</span>
-                      </div>
+                      {/* Pro Badge - Top Right Corner */}
+                      {isProOnly && (
+                        <div className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full p-0.5 shadow-sm">
+                          <Crown className="h-3 w-3 text-white" />
+                        </div>
+                      )}
+                      <span>{formatCadence(cadence)}</span>
                     </button>
                   );
                 })}
-                {updatingCadence && <Loader2 className="h-4 w-4 animate-spin text-gray-500" />}
               </div>
+              {!isPro && (
+                <div className="mt-3 text-xs text-amber-600 flex items-center space-x-1">
+                  <Crown className="h-3 w-3" />
+                  <span>Faster checks (30s, 15s, 1s) are available with Pro</span>
+                </div>
+              )}
             </div>
-            {!isPro && (
-              <div className="text-xs text-gray-600 flex items-center space-x-1">
-                <Crown className="h-3 w-3 text-amber-500" />
-                <span>Unlock 30s, 15s, and 1s checks with Pro</span>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
