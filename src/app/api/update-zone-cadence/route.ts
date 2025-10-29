@@ -47,8 +47,8 @@ export async function PATCH(request: NextRequest) {
     // Validate cadence based on tier
     const isPro = user.subscription_tier === "pro";
     const allowedCadences = isPro 
-      ? [1, 5, 15, 30, 60] 
-      : [30, 60];
+      ? [1, 15, 30, 60] 
+      : [60];
 
     if (!allowedCadences.includes(checkCadenceSeconds)) {
       return NextResponse.json(

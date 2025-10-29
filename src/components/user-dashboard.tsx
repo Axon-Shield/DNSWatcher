@@ -16,7 +16,8 @@ import {
   Loader2,
   Filter,
   TrendingUp,
-  Settings
+  Settings,
+  Lock
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Dot } from 'recharts';
 import { format, subDays, subWeeks, subMonths, isWithinInterval } from 'date-fns';
@@ -151,10 +152,9 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
 
   const isPro = data.user.subscription_tier === 'pro';
 
-  // Available cadence options based on tier
-  const cadenceOptions = isPro 
-    ? [1, 5, 15, 30, 60] // Pro: 1s, 5s, 15s, 30s, 60s
-    : [30, 60]; // Free: 30s, 60s
+  // All options; Pro unlocks 30s, 15s, 1s. Free only 60s.
+  const allCadences = [60, 30, 15, 1];
+  const selectableCadences = isPro ? allCadences : [60];
 
   const formatCadence = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
@@ -286,24 +286,36 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 <span className="text-sm text-gray-600">Currently: {formatCadence(currentCadence)}</span>
               </div>
               <div className="flex items-center space-x-2">
-                {cadenceOptions.map((cadence) => (
-                  <Button
-                    key={cadence}
-                    variant={currentCadence === cadence ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => updateCadence(cadence)}
-                    disabled={updatingCadence}
-                    className="text-xs"
-                  >
-                    {formatCadence(cadence)}
-                  </Button>
-                ))}
+                {allCadences.map((cadence) => {
+                  const isSelectable = selectableCadences.includes(cadence);
+                  const isActive = currentCadence === cadence;
+                  return (
+                    <button
+                      key={cadence}
+                      onClick={() => (isSelectable && !updatingCadence ? updateCadence(cadence) : alert('Upgrade to Pro to unlock this cadence'))}
+                      disabled={updatingCadence || (!isSelectable)}
+                      className={
+                        `h-10 w-16 rounded-md border transition-colors flex items-center justify-center text-sm ` +
+                        (isSelectable
+                          ? (isActive ? 'bg-black text-white border-black' : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-900')
+                          : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed')
+                      }
+                      aria-label={`Set cadence to ${formatCadence(cadence)}`}
+                    >
+                      <div className="flex items-center space-x-1">
+                        {!isSelectable && <Lock className="h-3.5 w-3.5" />}
+                        <span>{formatCadence(cadence)}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+                {updatingCadence && <Loader2 className="h-4 w-4 animate-spin text-gray-500" />}
               </div>
             </div>
             {!isPro && (
-              <div className="text-xs text-gray-500 flex items-center space-x-1">
-                <Crown className="h-3 w-3" />
-                <span>Upgrade to Pro for 1s, 5s, and 15s cadence options</span>
+              <div className="text-xs text-gray-600 flex items-center space-x-1">
+                <Crown className="h-3 w-3 text-amber-500" />
+                <span>Unlock 30s, 15s, and 1s checks with Pro</span>
               </div>
             )}
           </div>
