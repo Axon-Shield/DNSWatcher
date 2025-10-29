@@ -76,11 +76,12 @@ export async function POST(request: NextRequest) {
     // Use the first zone as the current zone
     const currentZone = allZones[0];
 
-    // Get zone history (all SOA checks) for the current zone
+    // Get zone history (SOA changes only) for the current zone
     const { data: zoneHistory, error: historyError } = await supabase
       .from("zone_checks")
       .select("*")
       .eq("zone_id", currentZone.id)
+      .eq("is_change", true)
       .order("checked_at", { ascending: false })
       .limit(50); // Last 50 checks
 

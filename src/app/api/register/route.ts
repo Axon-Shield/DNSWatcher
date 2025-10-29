@@ -140,15 +140,14 @@ export async function POST(request: NextRequest) {
           minimum: parseInt(parts[6])
         };
 
+        // Do not create a history record; just set baseline fields on the zone
         await supabase
-          .from("zone_checks")
-          .insert({
-            zone_id: newZone.id,
-            soa_serial: soaRecord.serial,
-            soa_record: JSON.stringify(soaRecord),
-            checked_at: new Date().toISOString(),
-            is_change: false,
-          });
+          .from("dns_zones")
+          .update({
+            last_checked: new Date().toISOString(),
+            last_soa_serial: soaRecord.serial,
+          })
+          .eq("id", newZone.id);
       }
     } catch (dnsError) {
       console.error("Error fetching initial SOA record:", dnsError);

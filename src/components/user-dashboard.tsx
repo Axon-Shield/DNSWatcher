@@ -365,11 +365,11 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
             <span>SOA Change History</span>
           </CardTitle>
           <CardDescription>
-            Recent changes detected in your DNS zone ({filteredHistory.length} records)
+            Recent changes detected in your DNS zone ({filteredHistory.filter(c => c.is_change).length} records)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {filteredHistory.length === 0 ? (
+          {filteredHistory.filter(c => c.is_change).length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Shield className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p>No changes detected in the selected time range</p>
@@ -377,17 +377,15 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredHistory.map((change) => (
+              {filteredHistory.filter(c => c.is_change).map((change) => (
                 <div key={change.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3">
-                      <div className={`h-5 w-5 mt-0.5 ${change.is_change ? 'text-orange-500' : 'text-gray-400'}`}>
-                        {change.is_change ? <AlertTriangle className="h-5 w-5" /> : <CheckCircle className="h-5 w-5" />}
+                      <div className={`h-5 w-5 mt-0.5 text-orange-500`}>
+                        <AlertTriangle className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium">
-                          {change.is_change ? 'SOA Record Changed' : 'SOA Record Checked'}
-                        </div>
+                        <div className="font-medium">SOA Record Changed</div>
                         <div className="text-sm text-gray-600">
                           Serial: <span className="font-mono">{change.soa_serial}</span>
                         </div>
