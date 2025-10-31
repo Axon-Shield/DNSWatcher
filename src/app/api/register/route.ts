@@ -121,9 +121,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create DNS zone with default 60-second cadence (1 minute)
-    const defaultCadence = 60;
-    const nextCheckAt = new Date(Date.now() + defaultCadence * 1000).toISOString();
+    // Determine default cadence based on subscription tier
+    // Free: 60 seconds (1 minute), Pro: 30 seconds
+    const defaultCadence = user.subscription_tier === "pro" ? 30 : 60;
+    const now = new Date();
+    const nextCheckAt = new Date(now.getTime() + defaultCadence * 1000).toISOString();
+    
+    // Initialize user's account-level cadence if not already set
+    if (!user.monitor_cadence_seconds) {
+      await supabase
+        .from("users")
+        .update({ monitor_cadence_seconds: defaultCadence })
+        .eq("id", userId);
+    }
     
     const { data: newZone, error: newZoneError } = await supabase
       .from("dns_zones")
@@ -132,7 +142,7 @@ export async function POST(request: NextRequest) {
         zone_name: dnsZone,
         is_active: true,
         check_cadence_seconds: defaultCadence,
-        next_check_at: nextCheckAt, // Schedule first check in 60 seconds
+        next_check_at: nextCheckAt, // Seed next_check_at based on tier default
       })
       .select()
       .single();
@@ -164,11 +174,10 @@ export async function POST(request: NextRequest) {
           minimum: parseInt(parts[6])
         };
 
-        // Set baseline serial and schedule next check; last_checked remains null until first poll
-        const nextCheck = new Date(Date.now() + defaultCadence * 1000).toISOString();
+        // Set baseline serial; next_check_at was already set on insert
         await supabase
           .from("dns_zones")
-          .update({ last_soa_serial: soaRecord.serial, next_check_at: nextCheck })
+          .update({ last_soa_serial: soaRecord.serial })
           .eq("id", newZone.id);
       }
     } catch (dnsError) {

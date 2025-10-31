@@ -18,7 +18,7 @@ example.com. 3600 IN SOA ns1.example.com. admin.example.com. (
 1. **Initial Registration**: User provides email and DNS zone
 2. **Email Verification**: New users must verify email before monitoring starts
 3. **Baseline Creation**: Fetch current SOA record as baseline
-4. **Scheduled Checks**: Every 1 minute for Free tier; Pro supports higher frequency (30s/15s/1s)
+4. **Scheduled Checks**: Free tier default: 60 seconds (1 minute); Pro default: 30 seconds. Both support configurable cadence (1s/15s/30s/60s)
 5. **Change Detection**: Compare current serial with previous check
 6. **Email Notification**: Send email alert via Resend if serial number changed
 7. **Historical Logging**: Record all checks for audit trail
@@ -83,15 +83,20 @@ smart_soa_change_detection(
 - **Error Disclosure**: Don't expose sensitive information
 
 ## Monitoring Schedule
-- **Frequency**: Free tier default: every 60 seconds; Pro: configurable (60s/30s/15s/1s)
-- **Implementation**: pg_cron job calling Supabase Edge Function
+- **Cron Frequency**: pg_cron job runs every 1 second (`* * * * *`)
+- **Zone-Level Cadence**: Each zone has its own `check_cadence_seconds` (1s/15s/30s/60s)
+- **Default Cadences**: 
+  - Free tier: 60 seconds (1 minute) default
+  - Pro tier: 30 seconds default
+- **Synchronization**: Edge function uses `next_check_at` to honor per-zone cadence
+- **Implementation**: pg_cron job calls Supabase Edge Function every second
 - **Cron Job**: `SELECT net.http_post(url := 'https://ipdbzqiypnvkgpgnsyva.supabase.co/functions/v1/dns-monitor', ...)`
-- **Authentication**: Uses anon key for Edge Function calls
+- **Authentication**: Uses service role key for Edge Function calls
 - **Reliability**: Supabase Edge Functions with automatic scaling
 - **Email Service**: Resend API integration
 - **Sender**: noreply@dnswatcher.axonshield.com
 - **Smart Filtering**: Intelligent change detection prevents notification spam
-- **Status**: ✅ **FULLY OPERATIONAL** - Smart high-frequency monitoring with spam prevention
+- **Status**: ✅ **FULLY OPERATIONAL** - Per-zone cadence synchronization with 1-second cron tick
 
 ## Notification Triggers & Channels
 - **Triggers**: SOA serial change (primary), zone errors, system alerts
@@ -129,9 +134,11 @@ smart_soa_change_detection(
 - **Content**: Complete DNS security alert with all details
 
 ### Cron Job Test Results
-- **Schedule**: ✅ Running every minute (`*/1 * * * *`)
-- **Edge Function Calls**: ✅ Successful HTTP POST requests
-- **Authentication**: ✅ Using anon key for Edge Function access
+- **Schedule**: ✅ Running every 1 second (`* * * * *`)
+- **Edge Function Calls**: ✅ Successful HTTP POST requests every second
+- **Authentication**: ✅ Using service role key for Edge Function access
+- **Per-Zone Cadence**: ✅ Zones checked only when `next_check_at <= now()`
+- **Default Cadences**: ✅ Free zones default to 60s, Pro zones default to 30s
 - **DNS Queries**: ✅ Real-time Google DNS over HTTPS queries
 - **Subdomain Support**: ✅ Handles Authority section for subdomains
 

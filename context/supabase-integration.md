@@ -57,11 +57,14 @@
   - Verified email delivery with ID: 85742c62-110c-4743-8b2c-689978e05d1e
 
 ### dns-monitor
-- **Purpose**: Smart high-frequency DNS monitoring with intelligent change detection
-- **Status**: ✅ **FULLY OPERATIONAL** - Smart monitoring every 30 seconds
+- **Purpose**: Smart high-frequency DNS monitoring with per-zone cadence synchronization
+- **Status**: ✅ **FULLY OPERATIONAL** - Per-zone cadence support with 1-second cron tick
 - **Functionality**:
   - Query Google DNS over HTTPS for SOA records
   - Handle both Answer and Authority sections (subdomain support)
+  - Per-zone cadence: Uses `next_check_at` to honor user-selected cadence (1s/15s/30s/60s)
+  - Only processes zones where `next_check_at <= now()` or `next_check_at IS NULL`
+  - Updates `last_checked` and recalculates `next_check_at` after each check
   - Smart change detection with filtering to prevent spam
   - Serial stability checks and trend analysis
   - Record zone checks in database
@@ -70,19 +73,20 @@
   - Intelligent filtering prevents notification spam
 
 ## Cron Jobs
-- **dns-monitor-job**: Runs every 30 seconds (`*/30 * * * * *`) - **HIGH-FREQUENCY MONITORING**
+- **dns-monitor-job**: Runs every 1 second (`* * * * *`) - **PER-ZONE CADENCE SYNCHRONIZATION**
 - **Function**: Calls Supabase Edge Function `dns-monitor` via HTTP POST
-- **Authentication**: Uses anon key for Edge Function access
-- **Status**: ✅ **FULLY OPERATIONAL** - Smart high-frequency monitoring with spam prevention
+- **Authentication**: Uses service role key for Edge Function access
+- **Cadence Support**: Edge function honors per-zone `check_cadence_seconds` via `next_check_at`
+- **Status**: ✅ **FULLY OPERATIONAL** - Per-zone cadence synchronization with 1-second cron tick
 - **Configuration**: 
   ```sql
   SELECT cron.schedule(
     'dns-monitor-job',
-    '*/30 * * * * *',
+    '* * * * *',  -- Every 1 second (5-field cron syntax)
     $$
     SELECT net.http_post(
       url := 'https://ipdbzqiypnvkgpgnsyva.supabase.co/functions/v1/dns-monitor',
-      headers := '{"Content-Type": "application/json", "Authorization": "Bearer [anon_key]"}'::jsonb,
+      headers := '{"Content-Type": "application/json", "Authorization": "Bearer [service_role_key]"}'::jsonb,
       body := '{}'::jsonb
     );
     $$

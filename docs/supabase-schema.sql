@@ -79,10 +79,12 @@ CREATE POLICY "Users can view own zone checks" ON zone_checks
 CREATE POLICY "Users can view own notifications" ON notifications
   FOR ALL USING (auth.uid()::text = user_id::text);
 
--- Schedule DNS monitoring every 5 minutes
+-- Schedule DNS monitoring every 1 second
+-- The edge function uses next_check_at to honor per-zone cadences (1s/15s/30s/60s)
+-- Free tier zones default to 60 seconds, Pro tier zones default to 30 seconds
 SELECT cron.schedule(
   'dns-monitor-job',
-  '*/5 * * * *',
+  '* * * * *',  -- Every 1 second (5-field cron syntax)
   'SELECT net.http_post(
     url:='https://ipdbzqiypnvkgpgnsyva.supabase.co/functions/v1/dns-monitor',
     headers:='{"Authorization": "Bearer ' || current_setting('app.settings.service_role_key') || '", "Content-Type": "application/json"}'::jsonb,
