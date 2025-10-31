@@ -826,14 +826,10 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                           <Button onClick={async () => {
                             try {
                               if (channelConfig.slack.webhookUrl) {
-                                const resp = await fetch('/api/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: 'slack', url: channelConfig.slack.webhookUrl }) });
-                                if (!resp.ok) throw new Error('Failed to send test');
-                                alert('Test notification sent to Slack!');
                                 setChannelEnabled(v => ({ ...v, slack: true }));
                                 await persistPreferences();
+                                alert('Slack webhook saved and channel enabled.');
                               }
-                            } catch (e) {
-                              alert('Could not send Slack test. Please verify the webhook URL.');
                             } finally {
                               setShowEditChannel(null);
                               setSlackStep(1);
@@ -847,14 +843,10 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                           <Button onClick={async () => {
                             try {
                               if (channelConfig.teams.webhookUrl) {
-                                const resp = await fetch('/api/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: 'teams', url: channelConfig.teams.webhookUrl }) });
-                                if (!resp.ok) throw new Error('Failed to send test');
-                                alert('Test notification sent to Microsoft Teams!');
                                 setChannelEnabled(v => ({ ...v, teams: true }));
                                 await persistPreferences();
+                                alert('Microsoft Teams webhook saved and channel enabled.');
                               }
-                            } catch (e) {
-                              alert('Could not send Teams test. Please verify the webhook URL.');
                             } finally {
                               setShowEditChannel(null);
                               setTeamsStep(1);
@@ -865,14 +857,10 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                         <Button onClick={async () => {
                           try {
                             if (showEditChannel === 'webhook' && channelConfig.webhook.endpoint) {
-                              const resp = await fetch('/api/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: 'webhook', url: channelConfig.webhook.endpoint }) });
-                              if (!resp.ok) throw new Error('Failed to send test');
-                              alert('Test notification sent to Webhook endpoint!');
                               setChannelEnabled(v => ({ ...v, webhook: true }));
                               await persistPreferences();
+                              alert('Webhook endpoint saved and channel enabled.');
                             }
-                          } catch (e) {
-                            alert('Could not send Webhook test. Please verify the endpoint URL.');
                           } finally {
                             setShowEditChannel(null);
                           }
