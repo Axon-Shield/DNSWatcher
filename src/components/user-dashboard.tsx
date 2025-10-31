@@ -22,7 +22,7 @@ import {
   ArrowRight,
   Plus
 } from "lucide-react";
-import { Bell, Mail, Slack, Webhook } from "lucide-react";
+import { Bell, Mail, Slack, Webhook, Pencil, Check, X } from "lucide-react";
 import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Dot } from 'recharts';
 import { format, subDays, subWeeks, subMonths, isWithinInterval } from 'date-fns';
@@ -504,9 +504,11 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 </div>
               </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowEditChannel('email')}>Edit</Button>
-              <Button size="sm" className={channelEnabled.email ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'} onClick={() => setChannelEnabled(v => ({...v, email: !v.email}))}>
-                {channelEnabled.email ? 'Enabled' : 'Disabled'}
+              <Button variant="ghost" size="sm" onClick={() => setShowEditChannel('email')} aria-label="Edit Email">
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button size="icon" variant="ghost" onClick={() => setChannelEnabled(v => ({...v, email: !v.email}))} aria-label={channelEnabled.email ? 'Disable' : 'Enable'} className={channelEnabled.email ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}>
+                {channelEnabled.email ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
               </Button>
               </div>
             </div>
@@ -521,9 +523,11 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setShowEditChannel('slack')}>Edit</Button>
-                <Button size="sm" className={channelEnabled.slack ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'} onClick={() => setChannelEnabled(v => ({...v, slack: !v.slack}))}>
-                  {channelEnabled.slack ? 'Enabled' : 'Disabled'}
+                <Button variant="ghost" size="sm" onClick={() => { setShowEditChannel('slack'); setSlackStep(1); }} aria-label="Edit Slack">
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => setChannelEnabled(v => ({...v, slack: !v.slack}))} aria-label={channelEnabled.slack ? 'Disable' : 'Enable'} className={channelEnabled.slack ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}>
+                  {channelEnabled.slack ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -538,9 +542,11 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setShowEditChannel('teams')}>Edit</Button>
-                <Button size="sm" className={channelEnabled.teams ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'} onClick={() => setChannelEnabled(v => ({...v, teams: !v.teams}))}>
-                  {channelEnabled.teams ? 'Enabled' : 'Disabled'}
+                <Button variant="ghost" size="sm" onClick={() => { setShowEditChannel('teams'); setTeamsStep(1); }} aria-label="Edit Teams">
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => setChannelEnabled(v => ({...v, teams: !v.teams}))} aria-label={channelEnabled.teams ? 'Disable' : 'Enable'} className={channelEnabled.teams ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}>
+                  {channelEnabled.teams ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -555,9 +561,11 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setShowEditChannel('webhook')}>Edit</Button>
-                <Button size="sm" className={channelEnabled.webhook ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'} onClick={() => setChannelEnabled(v => ({...v, webhook: !v.webhook}))}>
-                  {channelEnabled.webhook ? 'Enabled' : 'Disabled'}
+                <Button variant="ghost" size="sm" onClick={() => setShowEditChannel('webhook')} aria-label="Edit Webhook">
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => setChannelEnabled(v => ({...v, webhook: !v.webhook}))} aria-label={channelEnabled.webhook ? 'Disable' : 'Enable'} className={channelEnabled.webhook ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}>
+                  {channelEnabled.webhook ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -668,25 +676,26 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                       {slackStep === 1 && (
                         <div>
                           <div className="font-medium mb-1">Step 1: Create Slack App</div>
-                          <p className="text-sm text-gray-600">Login to the Slack API site, create an app <strong>From Scratch</strong>, name it (e.g., "DNSWatcher"), and select your workspace.</p>
+                          <p className="text-sm text-gray-600">Go to <strong>api.slack.com/apps</strong>. Click <strong>Create New App</strong> → <strong>From Scratch</strong>, name it (e.g., <em>DNSWatcher</em>) and pick your workspace.</p>
                         </div>
                       )}
                       {slackStep === 2 && (
                         <div>
                           <div className="font-medium mb-1">Step 2: Enable Incoming Webhooks</div>
-                          <p className="text-sm text-gray-600">In the left sidebar of your Slack app, go to <strong>Incoming Webhooks</strong> and toggle it on.</p>
+                          <p className="text-sm text-gray-600">In your app settings, open <strong>Incoming Webhooks</strong> and toggle <em>Activate Incoming Webhooks</em> to <strong>On</strong>.</p>
                         </div>
                       )}
                       {slackStep === 3 && (
                         <div>
-                          <div className="font-medium mb-1">Step 3: Add a Webhook to a Channel</div>
-                          <p className="text-sm text-gray-600">Click <strong>Add New Webhook</strong>, choose your channel, and press <strong>Install</strong>.</p>
+                          <div className="font-medium mb-1">Step 3: Add Webhook to a Channel</div>
+                          <p className="text-sm text-gray-600">Click <strong>Add New Webhook to Workspace</strong>, choose the target channel for alerts, then click <strong>Allow</strong> to install.</p>
                         </div>
                       )}
                       {slackStep === 4 && (
                         <div>
                           <div className="font-medium mb-2">Step 4: Paste Webhook URL</div>
-                          <input className="w-full border rounded-md px-3 py-2" placeholder="Slack Incoming Webhook URL" value={channelConfig.slack.webhookUrl} onChange={(e) => setChannelConfig(v => ({...v, slack: { webhookUrl: e.target.value }}))} />
+                          <p className="text-sm text-gray-600 mb-2">On the Incoming Webhooks page, scroll to the bottom to find your new webhook. Copy the <strong>Webhook URL</strong> and paste it below.</p>
+                          <input className="w-full border rounded-md px-3 py-2" placeholder="https://hooks.slack.com/services/..." value={channelConfig.slack.webhookUrl} onChange={(e) => setChannelConfig(v => ({...v, slack: { webhookUrl: e.target.value }}))} />
                         </div>
                       )}
                     </div>
@@ -750,6 +759,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                                 const resp = await fetch('/api/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: 'slack', url: channelConfig.slack.webhookUrl }) });
                                 if (!resp.ok) throw new Error('Failed to send test');
                                 alert('Test notification sent to Slack!');
+                                setChannelEnabled(v => ({ ...v, slack: true }));
                               }
                             } catch (e) {
                               alert('Could not send Slack test. Please verify the webhook URL.');
@@ -769,6 +779,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                                 const resp = await fetch('/api/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: 'teams', url: channelConfig.teams.webhookUrl }) });
                                 if (!resp.ok) throw new Error('Failed to send test');
                                 alert('Test notification sent to Microsoft Teams!');
+                                setChannelEnabled(v => ({ ...v, teams: true }));
                               }
                             } catch (e) {
                               alert('Could not send Teams test. Please verify the webhook URL.');
@@ -785,6 +796,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                               const resp = await fetch('/api/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: 'webhook', url: channelConfig.webhook.endpoint }) });
                               if (!resp.ok) throw new Error('Failed to send test');
                               alert('Test notification sent to Webhook endpoint!');
+                              setChannelEnabled(v => ({ ...v, webhook: true }));
                             }
                           } catch (e) {
                             alert('Could not send Webhook test. Please verify the endpoint URL.');
