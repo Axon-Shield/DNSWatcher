@@ -6,8 +6,9 @@ DNSWatcher uses Next.js 14 with the App Router for modern React development patt
 ## Core Pages
 ### Homepage (`src/app/page.tsx`)
 - **Purpose**: Multi-view application with routing between home, login, and dashboard
-- **Content**: Hero section, features grid, registration form, login form, user dashboard
+- **Content**: Hero section, security-focused features grid, Free vs Pro comparison, registration form, login form, user dashboard
 - **Styling**: Tailwind CSS with gradient backgrounds
+- **Pricing/Tiers**: Free tier cadence = 60s; Pro tier cadences = 60s/30s/15s/1s
 - **Components**: Shield, Eye, AlertTriangle, Mail, LogIn icons from Lucide React
 - **State Management**: `currentView` state for routing between views
 - **Features**: 

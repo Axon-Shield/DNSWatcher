@@ -18,7 +18,7 @@ example.com. 3600 IN SOA ns1.example.com. admin.example.com. (
 1. **Initial Registration**: User provides email and DNS zone
 2. **Email Verification**: New users must verify email before monitoring starts
 3. **Baseline Creation**: Fetch current SOA record as baseline
-4. **Scheduled Checks**: Every 1 minute, check SOA serial number
+4. **Scheduled Checks**: Every 1 minute for Free tier; Pro supports higher frequency (30s/15s/1s)
 5. **Change Detection**: Compare current serial with previous check
 6. **Email Notification**: Send email alert via Resend if serial number changed
 7. **Historical Logging**: Record all checks for audit trail
@@ -58,7 +58,7 @@ smart_soa_change_detection(
 ```
 
 ### Benefits
-- **⚡ Fast Detection**: 30-second monitoring frequency
+- **⚡ Fast Detection**: Pro supports down to 1-second checks (Free: 60s cadence)
 - **🛡️ Spam Protection**: Intelligent filtering prevents false alerts
 - **📈 Trend Analysis**: Understands DNS propagation patterns
 - **💾 Complete Logging**: All checks recorded for analysis
@@ -83,7 +83,7 @@ smart_soa_change_detection(
 - **Error Disclosure**: Don't expose sensitive information
 
 ## Monitoring Schedule
-- **Frequency**: Every 30 seconds (`*/30 * * * * *`) - **HIGH-FREQUENCY MONITORING**
+- **Frequency**: Free tier default: every 60 seconds; Pro: configurable (60s/30s/15s/1s)
 - **Implementation**: pg_cron job calling Supabase Edge Function
 - **Cron Job**: `SELECT net.http_post(url := 'https://ipdbzqiypnvkgpgnsyva.supabase.co/functions/v1/dns-monitor', ...)`
 - **Authentication**: Uses anon key for Edge Function calls

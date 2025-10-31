@@ -262,12 +262,9 @@ function HomeContent() {
               }}>
                 Add a DNS Zone
               </Button>
-              <Button size="lg" variant="outline" onClick={() => setCurrentView("login")}>
-                Sign In
-              </Button>
             </div>
             <div className="mt-6 text-sm text-gray-600 dark:text-gray-400">
-              High-frequency checks • Smart change filtering • Cooldown to prevent alert fatigue
+              Free: checks every 60s • Pro: 60s/30s/15s/1s • Smart filtering + cooldowns
             </div>
           </div>
         </div>
@@ -325,6 +322,60 @@ function HomeContent() {
               <li>Notification cooldowns to prevent alert fatigue</li>
             </ul>
           </div>
+        </section>
+
+        {/* Free vs Pro comparison */}
+        <section className="mb-16">
+          <h3 className="text-3xl font-bold text-center mb-8 text-gray-900 dark:text-white">Choose your coverage</h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="rounded-xl border border-gray-200/70 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/60 p-6 shadow-sm">
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-xl font-semibold">Free</span>
+                <span className="text-sm text-gray-500">Best for evaluation</span>
+              </div>
+              <div className="text-3xl font-extrabold mb-4">$0</div>
+              <ul className="space-y-2 text-gray-700 dark:text-gray-300 mb-4 list-disc pl-5">
+                <li>Monitoring cadence: 60 seconds</li>
+                <li>Smart filtering and cooldowns</li>
+                <li>Email alerts on verified changes</li>
+                <li>Up to 2 zones</li>
+              </ul>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => {
+                const el = document.getElementById("registration");
+                el?.scrollIntoView({ behavior: "smooth" });
+              }}>Start Free</Button>
+            </div>
+            <div className="rounded-xl border-2 border-blue-500/60 bg-white dark:bg-gray-800 p-6 shadow-[0_10px_40px_-15px_rgba(30,64,175,0.35)]">
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-xl font-semibold">Pro</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Coming soon</span>
+              </div>
+              <div className="text-3xl font-extrabold mb-4">TBA</div>
+              <ul className="space-y-2 text-gray-700 dark:text-gray-300 mb-4 list-disc pl-5">
+                <li>Monitoring cadence: 60s / 30s / 15s / 1s</li>
+                <li>Priority alerting and higher limits</li>
+                <li>Advanced analytics and exports</li>
+                <li>SLA-backed uptime</li>
+              </ul>
+              <Button variant="outline" className="w-full" onClick={() => setCurrentView("login")}>Join waitlist</Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Illustrative images */}
+        <section className="mb-12 grid md:grid-cols-2 gap-6">
+          <img
+            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1600&auto=format&fit=crop"
+            alt="Abstract network visualization representing DNS traffic"
+            className="w-full h-64 object-cover rounded-xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm"
+            loading="lazy"
+          />
+          <img
+            src="https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1600&auto=format&fit=crop"
+            alt="Security operations monitoring dashboard concept"
+            className="w-full h-64 object-cover rounded-xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm"
+            loading="lazy"
+          />
         </section>
 
         {/* Registration Form */}
