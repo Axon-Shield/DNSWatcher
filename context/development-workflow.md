@@ -1,7 +1,7 @@
 # Development Workflow Context
 
 ## Context-Aware Development Rules
-DNSWatcher uses intelligent, context-aware development patterns that automatically determine the appropriate tools and actions based on the type of feature being implemented.
+DNSWatcher uses intelligent, context-aware development patterns. Any code change MUST be accompanied by context documentation updates in the `context/` folder in the same commit.
 
 ## Repository Status
 - **Organization**: Axon-Shield
@@ -20,7 +20,7 @@ DNSWatcher uses intelligent, context-aware development patterns that automatical
 2. Use Supabase MCP tools for database operations
 3. Use pg_cron for scheduled tasks
 4. Deploy functions immediately with mcp_supabase_deploy_edge_function
-5. Update context files in context/ folder
+5. Update context files in `context/` folder (MANDATORY)
 6. **Git Commit**: Use mcp_github_push_files with descriptive commit message
 
 ### Frontend/UI Features  
@@ -30,7 +30,7 @@ DNSWatcher uses intelligent, context-aware development patterns that automatical
 2. Use shadcn/ui for UI components
 3. Use Tailwind CSS for styling
 4. Follow App Router patterns
-5. Update context files in context/ folder
+5. Update context files in `context/` folder (MANDATORY)
 6. **Git Commit**: Use mcp_github_push_files with descriptive commit message
 
 ### Database/Schema Changes
@@ -40,7 +40,7 @@ DNSWatcher uses intelligent, context-aware development patterns that automatical
 2. Never write direct SQL files
 3. Always enable RLS on new tables
 4. Create proper indexes for performance
-5. Update context files in context/ folder
+5. Update context files in `context/` folder (MANDATORY)
 6. **Git Commit**: Use mcp_github_push_files with descriptive commit message
 
 ### DNS/Monitoring Features
@@ -50,8 +50,8 @@ DNSWatcher uses intelligent, context-aware development patterns that automatical
 2. Modify cron job schedules if needed
 3. Update monitoring context
 4. Test with real DNS queries
-5. Update context files in context/ folder
-6. **Git Commit**: Use mcp_github_push_files with descriptive commit message
+5. Update context files in `context/` folder (MANDATORY)
+6. **Git Commit**: Use git with descriptive conventional commit message; include updated context files
 
 ### Email/Notification Features
 **Keywords**: "email", "notification", "alert", "SMTP", "send"
@@ -174,7 +174,7 @@ DNSWatcher uses intelligent, context-aware development patterns that automatical
 
 ### Deployment
 - **Edge Functions**: Automatic deployment via Supabase
-- **Next.js**: Vercel or similar platform deployment
+- **Next.js**: Vercel deployment
 - **Database**: Supabase managed PostgreSQL
 - **Monitoring**: Real-time monitoring and alerts
 

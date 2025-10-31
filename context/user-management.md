@@ -12,8 +12,8 @@
 - **Input Validation**: Zod schema validation
 - **User Creation**: Creates user with `email_confirmed: false`, `password_set: false`
 - **Zone Management**: Handles both new zones and reactivation
-- **Subscription Limits**: Enforces 1 zone limit for free users
-- **Existing User Check**: Redirects to login if user already has password
+- **Subscription Limits**: Enforces 2 zone limit for free users (Pro: unlimited)
+- **Existing User Check**: Redirects to login only for un-authenticated callers; authenticated/verified users can add zones directly
 
 ## Password-Based Authentication System
 ### Password Setup Flow
@@ -78,7 +78,7 @@
 
 ## Subscription Management
 ### Subscription Tiers
-- **Free Tier**: 1 DNS zone limit
+- **Free Tier**: 2 DNS zone limit
 - **Pro Tier**: Unlimited DNS zones
 - **Upgrade Prompts**: UI prompts for free users to upgrade
 
@@ -109,16 +109,17 @@
 
 ## User Dashboard
 ### Dashboard Features
-- **User Info**: Email, subscription tier, zone limits
-- **Current Zone**: Currently selected zone for viewing
+- **User Info**: Email, subscription tier, zone limits; sign out control
+- **Current Zone**: Currently selected zone for viewing (switch between zones)
 - **Zone History**: SOA change history with timestamps
 - **All Zones**: List of all monitored zones
 - **Zone Removal**: Remove zones from monitoring
+- **Add Zone**: Add new zones from the dashboard (post-verification)
 
 ### Dashboard State Management
 - **Zone Removal**: Updates UI after successful removal
 - **Success Feedback**: Shows success messages for operations
-- **Navigation**: Back to home page functionality
+- **Navigation**: Auto-route to dashboard when authenticated; sign out returns to landing
 - **Empty State**: Handles case when no zones remain
 
 ## Security Features

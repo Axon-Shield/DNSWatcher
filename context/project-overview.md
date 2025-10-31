@@ -13,12 +13,12 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 ## Core Functionality
 - **User Registration**: Email + DNS zone registration with email verification
 - **User Authentication**: Login system with email + DNS zone authentication
-- **Smart High-Frequency Monitoring**: Background task checks SOA records every 30 seconds
+- **Smart Monitoring**: Free tier checks every 60 seconds; Pro supports 60s/30s/15s/1s
 - **Intelligent Change Detection**: Smart filtering prevents notification spam
 - **Email Notifications**: Real-time security alerts via Supabase Edge Function + Resend SMTP
 - **Historical Tracking**: Complete audit trail of all DNS checks
 - **Zone Management**: Users can remove and re-enable zones
-- **Subscription Tiers**: Free (1 zone) and Pro (unlimited) tiers
+- **Subscription Tiers**: Free (up to 2 zones) and Pro (unlimited zones)
 
 ## Technology Stack
 - **Frontend**: Next.js 14 with App Router, React 18, TypeScript
@@ -31,10 +31,10 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - **Version Control**: GitHub MCP integration
 
 ## Architecture
-- **Multi-View Homepage**: Home, login, and dashboard views
+- **Multi-View Homepage**: Home, login, and dashboard views (auto-routes to dashboard when authenticated)
 - **Registration System**: Email + DNS zone registration with verification
 - **User Authentication**: Login system with email + DNS zone
-- **User Dashboard**: Zone management and SOA history viewing
+- **User Dashboard**: Add new zones, manage multiple zones, filter/view per-zone and history
 - **Background Monitoring**: Automated SOA record checking every 30 seconds with smart filtering
 - **Notification System**: Email alerts via Supabase Edge Functions
 - **Zone Management**: Remove and re-enable zones functionality
