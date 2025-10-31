@@ -19,7 +19,8 @@ import {
   TrendingUp,
   Settings,
   Lock,
-  ArrowRight
+  ArrowRight,
+  Plus
 } from "lucide-react";
 import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Dot } from 'recharts';
@@ -77,6 +78,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   const [newZone, setNewZone] = useState("");
   const [isAddingZone, setIsAddingZone] = useState(false);
   const [isSelectingZone, setIsSelectingZone] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -243,6 +245,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         throw new Error(result.message || "Failed to add zone");
       }
       setNewZone("");
+      setShowAddModal(false);
       // Refresh dashboard to include new zone
       await selectZone(result.zoneId);
     } catch (e) {
@@ -296,96 +299,77 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         </Alert>
       )}
 
-      {/* Add Zone + Zone Selector */}
+      {/* Consolidated Zones Card (list + current + add) */}
       <Card>
         <CardHeader>
-          <CardTitle>Add a DNS Zone</CardTitle>
-          <CardDescription>Start monitoring another domain</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-3">
-            <input
-              className="flex-1 border rounded-md px-3 py-2"
-              placeholder="example.com"
-              value={newZone}
-              onChange={(e) => setNewZone(e.target.value)}
-            />
-            <Button onClick={addZone} disabled={isAddingZone}>
-              {isAddingZone ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Adding...
-                </>
-              ) : (
-                "Add Zone"
-              )}
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Your Zones</CardTitle>
+              <CardDescription>Manage, view, and add monitored DNS zones</CardDescription>
+            </div>
+            <Button className="bg-green-600 hover:bg-green-700" onClick={() => setShowAddModal(true)}>
+              <Plus className="h-4 w-4 mr-1.5" /> Add
             </Button>
           </div>
-          {allZones.length > 0 && (
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-sm text-gray-600">Viewing:</span>
-              <select
-                className="border rounded-md px-2 py-1 text-sm"
-                value={currentZone.id}
-                onChange={(e) => selectZone(e.target.value)}
-              >
-                {allZones.map(z => (
-                  <option key={z.id} value={z.id}>{z.zone_name}</option>
-                ))}
-              </select>
-              {isSelectingZone && <Loader2 className="h-4 w-4 animate-spin text-gray-500" />}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Current Zone Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Shield className="h-5 w-5" />
-            <span>Currently Monitoring: {currentZone.zone_name}</span>
-          </CardTitle>
-          <CardDescription>
-            Zone created: {formatDate(currentZone.created_at)}
-            {currentZone.last_checked && (
-              <span> • Last checked: {formatDate(currentZone.last_checked)}</span>
-            )}
-          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-600">Active Monitoring</span>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => removeZone(currentZone.id)}
-                disabled={removingZone === currentZone.id}
-              >
-                {removingZone === currentZone.id ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Removing...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Remove Zone
-                  </>
-                )}
-              </Button>
+          {allZones.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <Shield className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p>No zones yet. Add your first DNS zone to begin monitoring.</p>
             </div>
-            
-            {/* Check Cadence Selector */}
-            <div className="pt-2 border-t">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2">
+          ) : (
+            <div className="overflow-hidden rounded-lg border">
+              <div className="grid grid-cols-12 bg-gray-50 text-xs font-semibold text-gray-600 px-4 py-2">
+                <div className="col-span-4">Zone</div>
+                <div className="col-span-3">Created</div>
+                <div className="col-span-3">Last checked</div>
+                <div className="col-span-2 text-right">Actions</div>
+              </div>
+              <div className="divide-y">
+                {allZones.map((zone) => {
+                  const isCurrent = zone.id === currentZone.id;
+                  return (
+                    <div key={zone.id} className={`grid grid-cols-12 items-center px-4 py-3 ${isCurrent ? 'bg-blue-50/50' : ''}`}>
+                      <div className="col-span-4">
+                        <div className="font-medium flex items-center gap-2">
+                          {zone.zone_name}
+                          {isCurrent && <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded">current</span>}
+                        </div>
+                      </div>
+                      <div className="col-span-3 text-sm text-gray-600">{formatDate(zone.created_at)}</div>
+                      <div className="col-span-3 text-sm text-gray-600">{zone.last_checked ? formatDate(zone.last_checked) : '—'}</div>
+                      <div className="col-span-2 flex items-center justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => selectZone(zone.id)} disabled={isSelectingZone && isCurrent}>
+                          {isSelectingZone && isCurrent ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'View'}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeZone(zone.id)}
+                          disabled={removingZone === zone.id}
+                        >
+                          {removingZone === zone.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Current zone controls (frequency) */}
+          {allZones.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
                   <Settings className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium">Check Frequency</span>
+                  <span className="text-sm font-medium">Check Frequency for {currentZone.zone_name}</span>
                 </div>
                 {updatingCadence && (
                   <div className="flex items-center space-x-2 text-xs text-gray-500">
@@ -394,8 +378,8 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                   </div>
                 )}
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {allCadences.map((cadence) => {
                     const isSelectable = selectableCadences.includes(cadence);
                     const isActive = currentCadence === cadence;
@@ -410,7 +394,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                           }}
                           disabled={updatingCadence || (!isSelectable)}
                           className={
-                            `relative h-12 w-16 rounded-md border-2 transition-all flex items-center justify-center text-sm font-medium ` +
+                            `relative h-10 w-16 rounded-md border transition-all flex items-center justify-center text-sm font-medium ` +
                             (isSelectable
                               ? (isActive 
                                   ? 'bg-blue-600 text-white border-blue-600 shadow-md hover:bg-blue-700' 
@@ -419,7 +403,6 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                           }
                           aria-label={`Set cadence to ${formatCadence(cadence)}${isProOnly ? ' (Pro only)' : ''}`}
                         >
-                          {/* Pro Badge - Top Right Corner */}
                           {isProOnly && (
                             <div className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full p-0.5 shadow-sm z-10">
                               <Crown className="h-3 w-3 text-white" />
@@ -427,21 +410,6 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                           )}
                           <span>{formatCadence(cadence)}</span>
                         </button>
-                        {/* Hover Tooltip for Pro Only */}
-                        {isProOnly && (
-                          <div className="absolute z-20 hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2">
-                            <div className="bg-gray-900 text-white text-xs rounded-md py-2 px-3 shadow-lg whitespace-nowrap">
-                              <div className="flex items-center space-x-1 mb-1">
-                                <Crown className="h-3 w-3 text-amber-400" />
-                                <span className="font-semibold">Pro Feature</span>
-                              </div>
-                              <p className="text-gray-300">Faster checks (30s, 15s, 1s) are available with Pro</p>
-                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                                <div className="border-4 border-transparent border-t-gray-900"></div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -457,9 +425,48 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 )}
               </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Add Zone Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => !isAddingZone && setShowAddModal(false)} />
+          <div className="relative z-10 w-full max-w-md mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle>Add DNS Zone</CardTitle>
+                <CardDescription>Enter a domain to start monitoring</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <input
+                    className="w-full border rounded-md px-3 py-2"
+                    placeholder="example.com"
+                    value={newZone}
+                    onChange={(e) => setNewZone(e.target.value)}
+                    disabled={isAddingZone}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setShowAddModal(false)} disabled={isAddingZone}>Cancel</Button>
+                    <Button onClick={addZone} className="bg-green-600 hover:bg-green-700" disabled={isAddingZone}>
+                      {isAddingZone ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        'Add Zone'
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
 
       {/* All Zones */}
       {allZones.length > 1 && (
