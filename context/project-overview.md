@@ -15,7 +15,7 @@ DNSWatcher is a proof-of-concept web application for DNS security monitoring. It
 - **User Authentication**: Login system with email + DNS zone authentication
 - **Smart Monitoring**: Free tier checks every 60 seconds; Pro supports 60s/30s/15s/1s
 - **Intelligent Change Detection**: Smart filtering prevents notification spam
-- **Email Notifications**: Real-time security alerts via Supabase Edge Function + Resend SMTP
+- **Notifications**: Multi-channel alerts (Email, Slack, Microsoft Teams, Webhooks)
 - **Historical Tracking**: Complete audit trail of all DNS checks
 - **Zone Management**: Users can remove and re-enable zones
 - **Subscription Tiers**: Free (up to 2 zones) and Pro (unlimited zones)

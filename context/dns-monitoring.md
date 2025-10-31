@@ -93,11 +93,10 @@ smart_soa_change_detection(
 - **Smart Filtering**: Intelligent change detection prevents notification spam
 - **Status**: ✅ **FULLY OPERATIONAL** - Smart high-frequency monitoring with spam prevention
 
-## Notification Triggers
-- **SOA Serial Change**: Primary trigger for notifications
-- **Zone Errors**: DNS query failures
-- **System Alerts**: Monitoring system issues
-- **User Preferences**: Respect notification settings
+## Notification Triggers & Channels
+- **Triggers**: SOA serial change (primary), zone errors, system alerts
+- **Channels**: Email, Slack, Microsoft Teams, Webhooks (configurable per user)
+- **Preferences**: Respect per-channel enable/disable and cooldowns
 
 ## Historical Data
 - **Zone Checks**: Complete audit trail

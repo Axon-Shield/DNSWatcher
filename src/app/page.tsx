@@ -299,9 +299,9 @@ function HomeContent() {
           </div>
           <div className="bg-white/70 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/50 p-6 rounded-xl shadow-sm">
             <Skull className="h-12 w-12 text-rose-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Defend against DNS hijacking</h3>
+            <h3 className="text-xl font-semibold mb-2">Actionable alerts</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Catch malicious redirects and rogue nameserver changes before your users are sent to impostor sites.
+              Multi-channel notifications (Email, Slack, Teams, Webhooks) with cooldown and stability checks.
             </p>
           </div>
           <div className="bg-white/70 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/50 p-6 rounded-xl shadow-sm">
