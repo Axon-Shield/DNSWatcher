@@ -75,6 +75,8 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   const [allZones, setAllZones] = useState<Zone[]>(data.allZones);
   const [currentCadence, setCurrentCadence] = useState<number>(data.currentZone.check_cadence_seconds || 60);
   const [newZone, setNewZone] = useState("");
+  const [isAddingZone, setIsAddingZone] = useState(false);
+  const [isSelectingZone, setIsSelectingZone] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -211,6 +213,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   };
 
   const selectZone = async (zoneId: string) => {
+    setIsSelectingZone(true);
     try {
       const res = await fetch(`/api/dashboard?zoneId=${encodeURIComponent(zoneId)}`);
       if (res.ok) {
@@ -221,10 +224,14 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         setCurrentCadence(next.currentZone.check_cadence_seconds || 60);
       }
     } catch {}
+    finally {
+      setIsSelectingZone(false);
+    }
   };
 
   const addZone = async () => {
     if (!newZone.trim()) return;
+    setIsAddingZone(true);
     try {
       const response = await fetch("/api/register", {
         method: "POST",
@@ -240,6 +247,8 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
       await selectZone(result.zoneId);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to add zone");
+    } finally {
+      setIsAddingZone(false);
     }
   };
 
@@ -301,7 +310,16 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
               value={newZone}
               onChange={(e) => setNewZone(e.target.value)}
             />
-            <Button onClick={addZone}>Add Zone</Button>
+            <Button onClick={addZone} disabled={isAddingZone}>
+              {isAddingZone ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                "Add Zone"
+              )}
+            </Button>
           </div>
           {allZones.length > 0 && (
             <div className="mt-4 flex items-center gap-2">
@@ -315,6 +333,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                   <option key={z.id} value={z.id}>{z.zone_name}</option>
                 ))}
               </select>
+              {isSelectingZone && <Loader2 className="h-4 w-4 animate-spin text-gray-500" />}
             </div>
           )}
         </CardContent>

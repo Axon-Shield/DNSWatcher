@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
+import { createClient as createSupabaseServerClient } from "@/lib/supabase-server";
 import { z } from "zod";
 
 interface SOARecordData {
@@ -26,6 +27,8 @@ export async function POST(request: NextRequest) {
     const { email, dnsZone } = registrationSchema.parse(body);
 
     const supabase = createServiceClient();
+    const supabaseServer = await createSupabaseServerClient();
+    const { data: sessionUser } = await supabaseServer.auth.getUser();
 
     // Create or get user
     const { data: existingUser, error: userError } = await supabase
@@ -38,8 +41,9 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       userId = existingUser.id;
       
-      // Only redirect to login if the account is fully verified
-      if (existingUser.password_set && existingUser.email_confirmed) {
+      // Only redirect to login if the account is fully verified AND the caller is not the authenticated owner
+      const isAuthenticatedForEmail = !!sessionUser.user?.email && sessionUser.user.email === email;
+      if (existingUser.password_set && existingUser.email_confirmed && !isAuthenticatedForEmail) {
         return NextResponse.json(
           { 
             message: "Account already exists. Please sign in instead.",
@@ -111,18 +115,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingZone) {
-      // Only redirect to login if account is verified and zone exists
-      if (existingUser && existingUser.password_set && existingUser.email_confirmed) {
-        return NextResponse.json(
-          { 
-            message: "Account and DNS zone already exist. Please sign in instead.",
-            redirectToLogin: true,
-            email: existingUser.email
-          },
-          { status: 400 }
-        );
-      }
-      
       return NextResponse.json(
         { message: "DNS zone is already being monitored for this email" },
         { status: 400 }

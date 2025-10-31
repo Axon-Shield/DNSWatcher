@@ -273,9 +273,7 @@ function HomeContent() {
                 Add a DNS Zone
               </Button>
             </div>
-            <div className="mt-6 text-sm text-gray-600 dark:text-gray-400">
-              Free: checks every 60s • Pro: 60s/30s/15s/1s • Smart filtering + cooldowns
-            </div>
+            {/* Cadence tagline removed per request */}
           </div>
         </div>
 
