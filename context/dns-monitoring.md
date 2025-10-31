@@ -30,9 +30,17 @@ example.com. 3600 IN SOA ns1.example.com. admin.example.com. (
 8. **Zone Management**: Users can remove and re-enable zones
 
 ## DNS Query Implementation
-### Google DNS API
-- **Endpoint**: `https://dns.google/resolve?name={zone}&type=SOA`
-- **Advantages**: Reliable, fast, no rate limiting issues
+### Authoritative Nameserver Query Strategy
+- **Step 1**: Query NS records for the zone to identify authoritative nameservers
+- **Step 2**: Query multiple recursive resolvers (Google DNS, Cloudflare, Quad9) in parallel via DoH
+- **Step 3**: Require majority consensus (2/3) across resolvers before accepting a serial
+- **Step 4**: On change detection, wait 300ms and re-query for confirmation
+- **Rationale**: While we identify authoritative nameservers, we query multiple independent recursive resolvers which reduces variance from any single resolver's routing/caching behavior
+
+### DNS-over-HTTPS (DoH) APIs Used
+- **Google DNS**: `https://dns.google/resolve?name={zone}&type=SOA`
+- **Cloudflare DNS**: `https://cloudflare-dns.com/dns-query?name={zone}&type=SOA`
+- **Quad9 DNS**: `https://dns.quad9.net/dns-query?name={zone}&type=SOA`
 - **Response Format**: JSON with Answer and Authority arrays
 - **Parsing**: Split SOA data string into components
 - **Subdomain Support**: If SOA is present in `Answer`, use it. If `Answer` is empty, fall back to the SOA in `Authority` (common when a subdomain inherits SOA from the apex).
