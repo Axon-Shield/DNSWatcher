@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Shield, Eye, AlertTriangle, Mail, LogIn } from "lucide-react";
+import { Shield, Eye, AlertTriangle, Network, Skull, Lock, LogIn } from "lucide-react";
 import RegistrationForm from "@/components/forms/registration-form";
 import LoginForm from "@/components/forms/login-form";
 import ForgotPassword from "@/components/forms/forgot-password";
@@ -244,51 +244,88 @@ function HomeContent() {
 
       {/* Hero Section */}
       <main className="container mx-auto px-4 py-12">
-        <div className="text-center mb-16">
-          <h2 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
-            DNS change detection that actually prevents incidents
-          </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            DNSWatcher monitors your zones every 30 seconds and alerts you only when it matters.
-            Smart filtering avoids noise, while multi-server consensus reduces false positives.
-          </p>
-          <div className="flex justify-center space-x-4">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700" onClick={() => {
-              const el = document.getElementById("registration");
-              el?.scrollIntoView({ behavior: "smooth" });
-            }}>
-              Add a DNS Zone
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => setCurrentView("login")}>
-              Sign In
-            </Button>
+        <div className="relative overflow-hidden rounded-2xl border border-blue-200/50 dark:border-blue-900/30 bg-white/60 dark:bg-gray-900/50 backdrop-blur-sm p-10 mb-16 shadow-[0_10px_40px_-15px_rgba(30,64,175,0.35)]">
+          <div className="absolute -top-24 -right-24 h-64 w-64 bg-gradient-to-br from-blue-500/20 to-indigo-500/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-16 -left-16 h-40 w-40 bg-gradient-to-br from-indigo-500/20 to-blue-500/10 rounded-full blur-2xl" />
+          <div className="relative text-center">
+            <h2 className="text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">
+              Know the moment your DNS is compromised
+            </h2>
+            <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto mb-8">
+              DNS is a prime target for attackers. DNSWatcher monitors your authoritative zones every 30 seconds,
+              detects unauthorized changes, and alerts your team before users are hijacked or services go dark.
+            </p>
+            <div className="flex justify-center gap-3">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 shadow-sm" onClick={() => {
+                const el = document.getElementById("registration");
+                el?.scrollIntoView({ behavior: "smooth" });
+              }}>
+                Add a DNS Zone
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => setCurrentView("login")}>
+                Sign In
+              </Button>
+            </div>
+            <div className="mt-6 text-sm text-gray-600 dark:text-gray-400">
+              High-frequency checks • Smart change filtering • Cooldown to prevent alert fatigue
+            </div>
           </div>
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+        <div className="grid md:grid-cols-3 gap-6 mb-16">
+          <div className="bg-white/70 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/50 p-6 rounded-xl shadow-sm">
             <Eye className="h-12 w-12 text-blue-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">High-frequency monitoring</h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                Checks every 30 seconds with throttling to keep providers happy and your data fresh.
-              </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-            <AlertTriangle className="h-12 w-12 text-orange-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Actionable alerts</h3>
+            <h3 className="text-xl font-semibold mb-2">Detect unauthorized zone changes</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Email notifications with cooldown and stability checks to prevent alert fatigue.
+              Track SOA serials and critical records for unexpected modifications that indicate tampering.
             </p>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-            <Mail className="h-12 w-12 text-green-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Built on Supabase</h3>
+          <div className="bg-white/70 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/50 p-6 rounded-xl shadow-sm">
+            <Skull className="h-12 w-12 text-rose-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Defend against DNS hijacking</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Secure auth, serverless edge functions, and pg_cron power the monitoring engine.
+              Catch malicious redirects and rogue nameserver changes before your users are sent to impostor sites.
+            </p>
+          </div>
+          <div className="bg-white/70 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/50 p-6 rounded-xl shadow-sm">
+            <Network className="h-12 w-12 text-indigo-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Built for security teams</h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              High-frequency checks, stability windows, and noise reduction tuned for real incident response.
             </p>
           </div>
         </div>
+
+        {/* Security education section */}
+        <section className="mb-16 grid lg:grid-cols-2 gap-8">
+          <div className="bg-white/70 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/50 rounded-xl p-6 shadow-sm">
+            <h3 className="text-2xl font-semibold mb-3 text-gray-900 dark:text-white">Why DNS security matters</h3>
+            <p className="text-gray-700 dark:text-gray-300 mb-3">
+              DNS translates names to services. If attackers alter your zone, they can silently redirect users,
+              intercept credentials, disrupt email delivery, or takedown critical apps. Monitoring zone integrity
+              is an essential control alongside configuration hardening and DNSSEC.
+            </p>
+            <ul className="list-disc pl-5 space-y-2 text-gray-700 dark:text-gray-300">
+              <li>DNS spoofing/poisoning: fraudulent answers that misroute users</li>
+              <li>Hijacking: unauthorized nameserver or record changes</li>
+              <li>Tampering: unexpected SOA serial jumps or record edits</li>
+            </ul>
+          </div>
+          <div className="bg-white/70 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/50 rounded-xl p-6 shadow-sm">
+            <h3 className="text-2xl font-semibold mb-3 text-gray-900 dark:text-white">How DNSWatcher helps</h3>
+            <p className="text-gray-700 dark:text-gray-300 mb-3">
+              We continuously compare observed zone state against the last known-good baseline and alert only when
+              changes are meaningful and stable. Cooldowns and stability windows reduce noise; frequent checks catch
+              compromise quickly.
+            </p>
+            <ul className="list-disc pl-5 space-y-2 text-gray-700 dark:text-gray-300">
+              <li>Every 30 seconds by default — tunable per zone</li>
+              <li>Serial stability checks to avoid flapping events</li>
+              <li>Notification cooldowns to prevent alert fatigue</li>
+            </ul>
+          </div>
+        </section>
 
         {/* Registration Form */}
         <div id="registration" className="max-w-2xl mx-auto">
