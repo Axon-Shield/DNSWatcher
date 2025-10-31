@@ -20,11 +20,13 @@ example.com. 3600 IN SOA ns1.example.com. admin.example.com. (
 3. **Baseline Creation**: Fetch current SOA record as baseline
 4. **Scheduled Checks**: Free tier default: 60 seconds (1 minute); Pro default: 30 seconds. Both support configurable cadence (1s/15s/30s/60s)
 5. **Change Detection**: Compare current serial with previous check
-   - **Multi-resolver consensus**: Queries Google DNS, Cloudflare DNS (1.1.1.1), and Quad9 simultaneously and requires majority agreement
+   - **Multi-resolver consensus**: Queries Google DNS, Cloudflare DNS (1.1.1.1), and Quad9 simultaneously and requires majority agreement (2/3)
+   - If any resolver fails, requires majority of successful resolvers (e.g., 2/2 if one fails, 2/3 if all succeed)
    - This prevents false positives from recursive resolver inconsistencies or authoritative nameserver sync issues
-   - Requires confirmation: On first detection of a change, waits 200ms and re-queries all resolvers; change must be confirmed by majority on second check
-   - Sampled serials are recorded in `zone_checks.change_details` for diagnostics (e.g., `Multi-resolver consensus: 2/3 agree (google,cloudflare); samples: 2387407399,2387407399,2387410343`)
+   - **Change confirmation**: On first detection of a change, waits 200ms and re-queries all resolvers; change must be confirmed by majority on second check with same serial
+   - Sampled serials are recorded in `zone_checks.change_details` for diagnostics (e.g., `Multi-resolver consensus: 2/3 agree (google,cloudflare); samples: 2387407399,2387407399,2387410343; NS: ns1.example.com`)
    - Correctly reads `last_soa_serial` from database to determine previous value for accurate change detection
+   - **Important**: The function processes all zones with majority consensus, regardless of whether NS lookup succeeded (NS lookup is for diagnostics only)
 6. **Email Notification**: Send email alert via Resend if serial number changed
 7. **Historical Logging**: Record all checks for audit trail
 8. **Zone Management**: Users can remove and re-enable zones
