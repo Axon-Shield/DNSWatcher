@@ -166,6 +166,15 @@ DNSWatcher uses intelligent, context-aware development patterns. Any code change
 - **Database**: Query performance monitoring
 - **Errors**: Centralized error tracking
 
+### Frontend Debugging (Browser Console)
+- **Use Cursor's inbuilt Chrome browser** to inspect runtime issues.
+- **Console logs**: Capture via the inbuilt console tool (no external Edge browser needed).
+- **Flow**:
+  1. Navigate to the deployed URL in the inbuilt browser
+  2. Reproduce the issue
+  3. Read console messages using the console capture tool
+  4. Fix and retest
+
 ### Testing
 - **Unit Tests**: Component and utility function testing
 - **Integration Tests**: API and database integration
