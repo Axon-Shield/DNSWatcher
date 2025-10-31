@@ -20,9 +20,10 @@ example.com. 3600 IN SOA ns1.example.com. admin.example.com. (
 3. **Baseline Creation**: Fetch current SOA record as baseline
 4. **Scheduled Checks**: Free tier default: 60 seconds (1 minute); Pro default: 30 seconds. Both support configurable cadence (1s/15s/30s/60s)
 5. **Change Detection**: Compare current serial with previous check
-   - Implements per-tick SOA stability sampling to prevent false positives
-   - The edge function now queries SOA up to 3 times in quick succession and selects the majority (mode) serial for that tick
-   - Sampled serials are recorded in `zone_checks.change_details` for diagnostics (e.g., `SOA serial changed from 2387407307 to 2387407399 (Stable votes: 2; samples: 2387407399,2387407307,2387407399)`)
+   - **Multi-resolver consensus**: Queries Google DNS, Cloudflare DNS (1.1.1.1), and Quad9 simultaneously and requires majority agreement
+   - This prevents false positives from recursive resolver inconsistencies or authoritative nameserver sync issues
+   - Requires confirmation: On first detection of a change, waits 200ms and re-queries all resolvers; change must be confirmed by majority on second check
+   - Sampled serials are recorded in `zone_checks.change_details` for diagnostics (e.g., `Multi-resolver consensus: 2/3 agree (google,cloudflare); samples: 2387407399,2387407399,2387410343`)
    - Correctly reads `last_soa_serial` from database to determine previous value for accurate change detection
 6. **Email Notification**: Send email alert via Resend if serial number changed
 7. **Historical Logging**: Record all checks for audit trail
