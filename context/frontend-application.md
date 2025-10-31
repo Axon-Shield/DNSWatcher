@@ -17,7 +17,9 @@ DNSWatcher uses Next.js 14 with the App Router for modern React development patt
   - Login form for existing users
   - User dashboard with zone management
   - Notifications card: Email, Slack, Microsoft Teams, Webhook with enable/disable and edit modals
-  - Slack setup walkthrough: 4-step wizard to create app, enable Incoming Webhooks, add to channel, and paste webhook URL
+  - Slack setup walkthrough: 4-step wizard (create app, enable Incoming Webhooks, add to channel, paste webhook URL)
+  - Teams setup walkthrough: 4-step wizard (open channel connectors, add Incoming Webhook, create/copy URL, paste webhook URL)
+  - Test notifications: On Save, send a test message to Slack/Teams/Webhook
   - Zone removal with proper state management
 
 ### Layout (`src/app/layout.tsx`)

@@ -82,6 +82,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditChannel, setShowEditChannel] = useState<null | 'email' | 'slack' | 'teams' | 'webhook'>(null);
   const [slackStep, setSlackStep] = useState<number>(1);
+  const [teamsStep, setTeamsStep] = useState<number>(1);
   const [channelEnabled, setChannelEnabled] = useState({ email: true, slack: false, teams: false, webhook: false });
   const [channelConfig, setChannelConfig] = useState({
     email: { address: data.user.email },
@@ -691,7 +692,32 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                     </div>
                   )}
                   {showEditChannel === 'teams' && (
-                    <input className="w-full border rounded-md px-3 py-2" placeholder="Microsoft Teams Webhook URL" value={channelConfig.teams.webhookUrl} onChange={(e) => setChannelConfig(v => ({...v, teams: { webhookUrl: e.target.value }}))} />
+                    <div className="space-y-4">
+                      {teamsStep === 1 && (
+                        <div>
+                          <div className="font-medium mb-1">Step 1: Open Teams Channel</div>
+                          <p className="text-sm text-gray-600">In Microsoft Teams, go to the channel where you want notifications and open <strong>Connectors</strong>.</p>
+                        </div>
+                      )}
+                      {teamsStep === 2 && (
+                        <div>
+                          <div className="font-medium mb-1">Step 2: Add Incoming Webhook</div>
+                          <p className="text-sm text-gray-600">Find <strong>Incoming Webhook</strong>, click <strong>Configure</strong>, and give it a name (e.g., "DNSWatcher").</p>
+                        </div>
+                      )}
+                      {teamsStep === 3 && (
+                        <div>
+                          <div className="font-medium mb-1">Step 3: Create and Copy URL</div>
+                          <p className="text-sm text-gray-600">Click <strong>Create</strong>, then copy the generated webhook URL.</p>
+                        </div>
+                      )}
+                      {teamsStep === 4 && (
+                        <div>
+                          <div className="font-medium mb-2">Step 4: Paste Webhook URL</div>
+                          <input className="w-full border rounded-md px-3 py-2" placeholder="Microsoft Teams Webhook URL" value={channelConfig.teams.webhookUrl} onChange={(e) => setChannelConfig(v => ({...v, teams: { webhookUrl: e.target.value }}))} />
+                        </div>
+                      )}
+                    </div>
                   )}
                   {showEditChannel === 'webhook' && (
                     <>
@@ -704,20 +730,68 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                       {showEditChannel === 'slack' && (
                         <span className="text-xs text-gray-500">Step {slackStep} of 4</span>
                       )}
+                      {showEditChannel === 'teams' && (
+                        <span className="text-xs text-gray-500">Step {teamsStep} of 4</span>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" onClick={() => {
                         if (showEditChannel === 'slack' && slackStep > 1) { setSlackStep(s => s - 1); return; }
+                        if (showEditChannel === 'teams' && teamsStep > 1) { setTeamsStep(s => s - 1); return; }
                         setShowEditChannel(null);
-                      }}>{showEditChannel === 'slack' && slackStep > 1 ? 'Back' : 'Cancel'}</Button>
+                      }}>{(showEditChannel === 'slack' && slackStep > 1) || (showEditChannel === 'teams' && teamsStep > 1) ? 'Back' : 'Cancel'}</Button>
                       {showEditChannel === 'slack' ? (
                         slackStep < 4 ? (
                           <Button onClick={() => setSlackStep(s => Math.min(4, s + 1))}>Next</Button>
                         ) : (
-                          <Button onClick={() => setShowEditChannel(null)}>Save</Button>
+                          <Button onClick={async () => {
+                            try {
+                              if (channelConfig.slack.webhookUrl) {
+                                const resp = await fetch('/api/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: 'slack', url: channelConfig.slack.webhookUrl }) });
+                                if (!resp.ok) throw new Error('Failed to send test');
+                                alert('Test notification sent to Slack!');
+                              }
+                            } catch (e) {
+                              alert('Could not send Slack test. Please verify the webhook URL.');
+                            } finally {
+                              setShowEditChannel(null);
+                              setSlackStep(1);
+                            }
+                          }}>Save</Button>
+                        )
+                      ) : showEditChannel === 'teams' ? (
+                        teamsStep < 4 ? (
+                          <Button onClick={() => setTeamsStep(s => Math.min(4, s + 1))}>Next</Button>
+                        ) : (
+                          <Button onClick={async () => {
+                            try {
+                              if (channelConfig.teams.webhookUrl) {
+                                const resp = await fetch('/api/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: 'teams', url: channelConfig.teams.webhookUrl }) });
+                                if (!resp.ok) throw new Error('Failed to send test');
+                                alert('Test notification sent to Microsoft Teams!');
+                              }
+                            } catch (e) {
+                              alert('Could not send Teams test. Please verify the webhook URL.');
+                            } finally {
+                              setShowEditChannel(null);
+                              setTeamsStep(1);
+                            }
+                          }}>Save</Button>
                         )
                       ) : (
-                        <Button onClick={() => setShowEditChannel(null)}>Save</Button>
+                        <Button onClick={async () => {
+                          try {
+                            if (showEditChannel === 'webhook' && channelConfig.webhook.endpoint) {
+                              const resp = await fetch('/api/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: 'webhook', url: channelConfig.webhook.endpoint }) });
+                              if (!resp.ok) throw new Error('Failed to send test');
+                              alert('Test notification sent to Webhook endpoint!');
+                            }
+                          } catch (e) {
+                            alert('Could not send Webhook test. Please verify the endpoint URL.');
+                          } finally {
+                            setShowEditChannel(null);
+                          }
+                        }}>Save</Button>
                       )}
                     </div>
                   </div>
