@@ -136,7 +136,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: data.user.email,
+          userId: data.user.id,
           zoneId: zoneId,
         }),
       });
@@ -468,47 +468,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         </div>
       )}
 
-      {/* All Zones */}
-      {allZones.length > 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>All Your Zones</CardTitle>
-            <CardDescription>
-              Manage all your monitored DNS zones
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {allZones.map((zone) => (
-                <div key={zone.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <div className="font-medium">{zone.zone_name}</div>
-                    <div className="text-sm text-gray-500">
-                      Created: {formatDate(zone.created_at)}
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <Button variant="outline" size="sm" onClick={() => selectZone(zone.id)}>View</Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeZone(zone.id)}
-                      disabled={removingZone === zone.id}
-                    >
-                      {removingZone === zone.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* All Zones card removed (merged into consolidated card above) */}
 
       {/* DNS Changes Chart */}
       <Card>

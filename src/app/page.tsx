@@ -15,6 +15,7 @@ function HomeContent() {
   const [currentView, setCurrentView] = useState<"home" | "login" | "forgot-password" | "dashboard">("home");
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isBootstrapping, setIsBootstrapping] = useState(false);
   const searchParams = useSearchParams();
 
   // Auto-login after email verification
@@ -76,12 +77,14 @@ function HomeContent() {
           // If authenticated and still on home, load dashboard automatically
           if (currentView === "home") {
             try {
+              setIsBootstrapping(true);
               const res = await fetch("/api/dashboard", { method: "GET" });
               if (res.ok) {
                 const dash = await res.json();
                 handleLoginSuccess(dash);
               }
             } catch {}
+            finally { setIsBootstrapping(false); }
           }
         } else {
           setUserEmail(null);
@@ -208,6 +211,14 @@ function HomeContent() {
   // Show home page
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      {isBootstrapping && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/60 dark:bg-black/40 backdrop-blur-sm">
+          <div className="text-center">
+            <Shield className="h-16 w-16 text-blue-600 mx-auto mb-4 animate-pulse" />
+            <p className="text-gray-700 dark:text-gray-200">Loading your dashboard…</p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
