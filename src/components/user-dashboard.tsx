@@ -533,9 +533,20 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 <Button variant="ghost" size="sm" className="border border-gray-200" onClick={() => setShowEditChannel('email')} aria-label="Edit Email">
                 <Pencil className="h-4 w-4" />
               </Button>
-                <Button size="icon" variant="ghost" onClick={() => { const next = { ...channelEnabled, email: !channelEnabled.email }; setChannelEnabled(next); persistPreferences({ ...initialPrefs, email_enabled: next.email }); }} aria-label={channelEnabled.email ? 'Disable' : 'Enable'} className={`border border-gray-200 ${channelEnabled.email ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}`}>
-                {channelEnabled.email ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-              </Button>
+                <button onClick={() => {
+                  const nextEnabled = { ...channelEnabled, email: !channelEnabled.email };
+                  setChannelEnabled(nextEnabled);
+                  persistPreferences({
+                    email_enabled: nextEnabled.email,
+                    email_address: channelConfig.email.address,
+                    slack: { enabled: nextEnabled.slack, webhookUrl: channelConfig.slack.webhookUrl },
+                    teams: { enabled: nextEnabled.teams, webhookUrl: channelConfig.teams.webhookUrl },
+                    webhook: { enabled: nextEnabled.webhook, endpoint: channelConfig.webhook.endpoint, secret: channelConfig.webhook.secret },
+                    frequency: 'immediate',
+                  });
+                }} aria-label={channelEnabled.email ? 'Disable' : 'Enable'} className={`border border-gray-200 h-6 w-10 rounded-full relative transition-colors ${channelEnabled.email ? 'bg-green-500' : 'bg-red-500'}`}>
+                  <span className={`absolute top-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform ${channelEnabled.email ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </button>
               </div>
             </div>
 
@@ -552,9 +563,20 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 <Button variant="ghost" size="sm" className="border border-gray-200" onClick={() => { setShowEditChannel('slack'); setSlackStep(1); }} aria-label="Edit Slack">
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button size="icon" variant="ghost" onClick={() => { const next = { ...channelEnabled, slack: !channelEnabled.slack }; setChannelEnabled(next); persistPreferences(); }} aria-label={channelEnabled.slack ? 'Disable' : 'Enable'} className={`border border-gray-200 ${channelEnabled.slack ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}`}>
-                  {channelEnabled.slack ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                </Button>
+                <button onClick={() => {
+                  const nextEnabled = { ...channelEnabled, slack: !channelEnabled.slack };
+                  setChannelEnabled(nextEnabled);
+                  persistPreferences({
+                    email_enabled: nextEnabled.email,
+                    email_address: channelConfig.email.address,
+                    slack: { enabled: nextEnabled.slack, webhookUrl: channelConfig.slack.webhookUrl },
+                    teams: { enabled: nextEnabled.teams, webhookUrl: channelConfig.teams.webhookUrl },
+                    webhook: { enabled: nextEnabled.webhook, endpoint: channelConfig.webhook.endpoint, secret: channelConfig.webhook.secret },
+                    frequency: 'immediate',
+                  });
+                }} aria-label={channelEnabled.slack ? 'Disable' : 'Enable'} className={`border border-gray-200 h-6 w-10 rounded-full relative transition-colors ${channelEnabled.slack ? 'bg-green-500' : 'bg-red-500'}`}>
+                  <span className={`absolute top-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform ${channelEnabled.slack ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </button>
               </div>
             </div>
 
@@ -571,9 +593,20 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 <Button variant="ghost" size="sm" className="border border-gray-200" onClick={() => { setShowEditChannel('teams'); setTeamsStep(1); }} aria-label="Edit Teams">
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button size="icon" variant="ghost" onClick={() => { const next = { ...channelEnabled, teams: !channelEnabled.teams }; setChannelEnabled(next); persistPreferences(); }} aria-label={channelEnabled.teams ? 'Disable' : 'Enable'} className={`border border-gray-200 ${channelEnabled.teams ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}`}>
-                  {channelEnabled.teams ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                </Button>
+                <button onClick={() => {
+                  const nextEnabled = { ...channelEnabled, teams: !channelEnabled.teams };
+                  setChannelEnabled(nextEnabled);
+                  persistPreferences({
+                    email_enabled: nextEnabled.email,
+                    email_address: channelConfig.email.address,
+                    slack: { enabled: nextEnabled.slack, webhookUrl: channelConfig.slack.webhookUrl },
+                    teams: { enabled: nextEnabled.teams, webhookUrl: channelConfig.teams.webhookUrl },
+                    webhook: { enabled: nextEnabled.webhook, endpoint: channelConfig.webhook.endpoint, secret: channelConfig.webhook.secret },
+                    frequency: 'immediate',
+                  });
+                }} aria-label={channelEnabled.teams ? 'Disable' : 'Enable'} className={`border border-gray-200 h-6 w-10 rounded-full relative transition-colors ${channelEnabled.teams ? 'bg-green-500' : 'bg-red-500'}`}>
+                  <span className={`absolute top-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform ${channelEnabled.teams ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </button>
               </div>
             </div>
 
@@ -590,9 +623,20 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 <Button variant="ghost" size="sm" className="border border-gray-200" onClick={() => setShowEditChannel('webhook')} aria-label="Edit Webhook">
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button size="icon" variant="ghost" onClick={() => { const next = { ...channelEnabled, webhook: !channelEnabled.webhook }; setChannelEnabled(next); persistPreferences(); }} aria-label={channelEnabled.webhook ? 'Disable' : 'Enable'} className={`border border-gray-200 ${channelEnabled.webhook ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}`}>
-                  {channelEnabled.webhook ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                </Button>
+                <button onClick={() => {
+                  const nextEnabled = { ...channelEnabled, webhook: !channelEnabled.webhook };
+                  setChannelEnabled(nextEnabled);
+                  persistPreferences({
+                    email_enabled: nextEnabled.email,
+                    email_address: channelConfig.email.address,
+                    slack: { enabled: nextEnabled.slack, webhookUrl: channelConfig.slack.webhookUrl },
+                    teams: { enabled: nextEnabled.teams, webhookUrl: channelConfig.teams.webhookUrl },
+                    webhook: { enabled: nextEnabled.webhook, endpoint: channelConfig.webhook.endpoint, secret: channelConfig.webhook.secret },
+                    frequency: 'immediate',
+                  });
+                }} aria-label={channelEnabled.webhook ? 'Disable' : 'Enable'} className={`border border-gray-200 h-6 w-10 rounded-full relative transition-colors ${channelEnabled.webhook ? 'bg-green-500' : 'bg-red-500'}`}>
+                  <span className={`absolute top-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform ${channelEnabled.webhook ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </button>
               </div>
             </div>
           </div>
