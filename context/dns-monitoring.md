@@ -20,6 +20,9 @@ example.com. 3600 IN SOA ns1.example.com. admin.example.com. (
 3. **Baseline Creation**: Fetch current SOA record as baseline
 4. **Scheduled Checks**: Free tier default: 60 seconds (1 minute); Pro default: 30 seconds. Both support configurable cadence (1s/15s/30s/60s)
 5. **Change Detection**: Compare current serial with previous check
+   - Implements per-tick SOA stability sampling to prevent false positives
+   - The edge function now queries SOA up to 3 times in quick succession and selects the majority (mode) serial for that tick
+   - Sampled serials are recorded in `zone_checks.change_details` for diagnostics (e.g., `Stable votes: 2; samples: 2387407399,2387407307,2387407399`)
 6. **Email Notification**: Send email alert via Resend if serial number changed
 7. **Historical Logging**: Record all checks for audit trail
 8. **Zone Management**: Users can remove and re-enable zones
@@ -96,12 +99,18 @@ smart_soa_change_detection(
 - **Email Service**: Resend API integration
 - **Sender**: noreply@dnswatcher.axonshield.com
 - **Smart Filtering**: Intelligent change detection prevents notification spam
+- **Stability Sampling**: Majority-vote SOA sampling per run avoids flip-flops caused by resolver/cache variance
 - **Status**: ✅ **FULLY OPERATIONAL** - Per-zone cadence synchronization with 1-second cron tick
 
 ## Notification Triggers & Channels
 - **Triggers**: SOA serial change (primary), zone errors, system alerts
 - **Channels**: Email, Slack, Microsoft Teams, Webhooks (configurable per user)
 - **Preferences**: Respect per-channel enable/disable and cooldowns
+### Notification Payload Details
+- **Slack**: Title + detailed text (zone, old/new serial, NS/admin, refresh/retry/expire, timestamp), plus login link
+- **Teams**: MessageCard with the above details and an OpenUri button to DNSWatcher
+- **Webhook**: JSON body with `event`, `zone`, `old_serial`, `new_serial`, `soa`, `occurred_at`, `login_url`
+- **Email**: Rich HTML email with the above details and a "View in DNSWatcher" button
 
 ## Historical Data
 - **Zone Checks**: Complete audit trail

@@ -62,6 +62,7 @@
 - **Functionality**:
   - Query Google DNS over HTTPS for SOA records
   - Handle both `Answer` and `Authority` sections (subdomain support)
+  - Per-run SOA stability sampling (3 quick queries; pick majority serial) to avoid resolver flip-flops
   - If `Answer` is empty, fall back to `Authority` to read the governing SOA (typical for subdomains inheriting apex SOA)
   - Tracking a subdomain does not create/track the apex as a separate zone; the apex SOA is only read when it governs the subdomain
   - Per-zone cadence: Uses `next_check_at` to honor user-selected cadence (1s/15s/30s/60s)
@@ -73,6 +74,11 @@
   - Send email notifications only for genuine changes
   - Verified change detection: Serial 2386530407 → 2386530404
   - Intelligent filtering prevents notification spam
+
+#### Notifications
+- **Slack/Teams/Webhook**: Now include zone, old/new serial, nameserver/admin, SOA timers, timestamp, and a login link
+- **Email**: Rich HTML email with full details and a CTA button to view in DNSWatcher
+- **Diagnostics**: `zone_checks.change_details` stores stability sampling summary
 
 ## Cron Jobs
 - **dns-monitor-job**: Runs every 1 second (`* * * * *`) - **PER-ZONE CADENCE SYNCHRONIZATION**
