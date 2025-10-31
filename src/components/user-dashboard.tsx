@@ -828,7 +828,18 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                               if (channelConfig.slack.webhookUrl) {
                                 setChannelEnabled(v => ({ ...v, slack: true }));
                                 await persistPreferences();
-                                alert('Slack webhook saved and channel enabled.');
+                                // Fire a test notification to verify webhook works
+                                const resp = await fetch('/api/notifications/test', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ channel: 'slack', url: channelConfig.slack.webhookUrl })
+                                });
+                                const payload = await resp.json().catch(() => ({}));
+                                if (!resp.ok) {
+                                  alert(`Slack test failed: ${payload?.message || 'Unknown error'}\n${payload?.details || ''}`);
+                                } else {
+                                  alert('Slack webhook saved and test notification sent.');
+                                }
                               }
                             } finally {
                               setShowEditChannel(null);
