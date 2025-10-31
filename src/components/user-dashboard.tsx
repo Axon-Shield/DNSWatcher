@@ -160,6 +160,11 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   }, [filteredHistory]);
 
   const removeZone = async (zoneId: string) => {
+    const zone = allZones.find(z => z.id === zoneId);
+    const name = zone?.zone_name || 'this zone';
+    if (!window.confirm(`Are you sure you want to remove ${name} from monitoring?`)) {
+      return;
+    }
     setRemovingZone(zoneId);
     try {
       const response = await fetch("/api/remove-zone", {
@@ -401,7 +406,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Settings className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium">Check Frequency for {currentZone.zone_name}</span>
+              <span className="text-sm font-medium">Check Frequency (applies to all zones)</span>
                 </div>
                 {updatingCadence && (
                   <div className="flex items-center space-x-2 text-xs text-gray-500">

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const updateCadenceSchema = z.object({
   email: z.string().email(),
-  zoneId: z.string().uuid(),
+  zoneId: z.string().uuid().optional(),
   checkCadenceSeconds: z.number().int().min(1).max(60), // 1-60 seconds
 });
 
@@ -29,19 +29,12 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Get zone to verify ownership
-    const { data: zone, error: zoneError } = await supabase
-      .from("dns_zones")
-      .select("id, user_id, zone_name")
-      .eq("id", zoneId)
-      .eq("user_id", user.id)
-      .single();
-
-    if (zoneError || !zone) {
-      return NextResponse.json(
-        { success: false, message: "Zone not found or access denied" },
-        { status: 404 }
-      );
+    // Verify ownership and get target zones (single or all)
+    let q = supabase.from("dns_zones").select("id").eq("user_id", user.id);
+    if (zoneId) q = q.eq("id", zoneId);
+    const { data: targetZones, error: zoneError } = await q;
+    if (zoneError || !targetZones || targetZones.length === 0) {
+      return NextResponse.json({ success: false, message: "Zone(s) not found or access denied" }, { status: 404 });
     }
 
     // Validate cadence based on tier
@@ -66,13 +59,11 @@ export async function PATCH(request: NextRequest) {
     const now = new Date();
     const nextCheckAt = new Date(now.getTime() + checkCadenceSeconds * 1000).toISOString();
     
+    const ids = targetZones.map((z: any) => z.id);
     const { error: updateError } = await supabase
       .from("dns_zones")
-      .update({ 
-        check_cadence_seconds: checkCadenceSeconds,
-        next_check_at: nextCheckAt // Recalculate immediately when cadence changes
-      })
-      .eq("id", zoneId);
+      .update({ check_cadence_seconds: checkCadenceSeconds, next_check_at: nextCheckAt })
+      .in("id", ids);
 
     if (updateError) {
       console.error("Error updating zone cadence:", updateError);
@@ -82,11 +73,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Zone cadence updated successfully",
-      checkCadenceSeconds,
-    });
+    return NextResponse.json({ success: true, message: "Cadence updated", checkCadenceSeconds, zoneCount: ids.length });
 
   } catch (error) {
     console.error("Update cadence error:", error);

@@ -164,17 +164,11 @@ export async function POST(request: NextRequest) {
           minimum: parseInt(parts[6])
         };
 
-        // Do not create a history record; just set baseline fields on the zone
-        const now = new Date().toISOString();
+        // Set baseline serial and schedule next check; last_checked remains null until first poll
         const nextCheck = new Date(Date.now() + defaultCadence * 1000).toISOString();
-        
         await supabase
           .from("dns_zones")
-          .update({
-            last_checked: now,
-            last_soa_serial: soaRecord.serial,
-            next_check_at: nextCheck, // Schedule next check based on cadence
-          })
+          .update({ last_soa_serial: soaRecord.serial, next_check_at: nextCheck })
           .eq("id", newZone.id);
       }
     } catch (dnsError) {
