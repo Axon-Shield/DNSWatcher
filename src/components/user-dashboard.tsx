@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { createClient as createBrowserSupabaseClient } from "@/lib/supabase-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +69,12 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   const [removedZoneName, setRemovedZoneName] = useState<string | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('7d');
   const [updatingCadence, setUpdatingCadence] = useState(false);
+  // Local state derived from props to support filtering and adding zones
+  const [currentZone, setCurrentZone] = useState<Zone>(data.currentZone);
+  const [zoneHistory, setZoneHistory] = useState<ZoneHistory[]>(data.zoneHistory);
+  const [allZones, setAllZones] = useState<Zone[]>(data.allZones);
   const [currentCadence, setCurrentCadence] = useState<number>(data.currentZone.check_cadence_seconds || 60);
+  const [newZone, setNewZone] = useState("");
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -80,7 +86,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
 
   // Filter data based on time range
   const filteredHistory = useMemo(() => {
-    if (timeFilter === 'all') return data.zoneHistory;
+    if (timeFilter === 'all') return zoneHistory;
     
     const now = new Date();
     let startDate: Date;
@@ -99,10 +105,10 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         startDate = subDays(now, 7);
     }
     
-    return data.zoneHistory.filter(change => 
+    return zoneHistory.filter(change => 
       isWithinInterval(new Date(change.checked_at), { start: startDate, end: now })
     );
-  }, [data.zoneHistory, timeFilter]);
+  }, [zoneHistory, timeFilter]);
 
   // Prepare chart data
   const chartData = useMemo(() => {
@@ -175,7 +181,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         },
         body: JSON.stringify({
           email: data.user.email,
-          zoneId: data.currentZone.id,
+          zoneId: currentZone.id,
           checkCadenceSeconds: newCadence,
         }),
       });
@@ -192,6 +198,48 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
       alert(error instanceof Error ? error.message : "Failed to update cadence");
     } finally {
       setUpdatingCadence(false);
+    }
+  };
+
+  const signOut = async () => {
+    const supabase = createBrowserSupabaseClient();
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      window.location.href = "/";
+    }
+  };
+
+  const selectZone = async (zoneId: string) => {
+    try {
+      const res = await fetch(`/api/dashboard?zoneId=${encodeURIComponent(zoneId)}`);
+      if (res.ok) {
+        const next = await res.json();
+        setCurrentZone(next.currentZone);
+        setZoneHistory(next.zoneHistory || []);
+        setAllZones(next.allZones || []);
+        setCurrentCadence(next.currentZone.check_cadence_seconds || 60);
+      }
+    } catch {}
+  };
+
+  const addZone = async () => {
+    if (!newZone.trim()) return;
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.user.email, dnsZone: newZone.trim() }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to add zone");
+      }
+      setNewZone("");
+      // Refresh dashboard to include new zone
+      await selectZone(result.zoneId);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to add zone");
     }
   };
 
@@ -218,11 +266,9 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
             {isPro ? <Crown className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
             <span>{isPro ? 'Pro' : 'Free'}</span>
           </Badge>
-          {onBack && (
-            <Button variant="outline" onClick={onBack}>
-              Back to Home
-            </Button>
-          )}
+          <Button variant="outline" onClick={signOut}>
+            Sign out
+          </Button>
         </div>
       </div>
 
@@ -241,17 +287,50 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         </Alert>
       )}
 
+      {/* Add Zone + Zone Selector */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Add a DNS Zone</CardTitle>
+          <CardDescription>Start monitoring another domain</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-3">
+            <input
+              className="flex-1 border rounded-md px-3 py-2"
+              placeholder="example.com"
+              value={newZone}
+              onChange={(e) => setNewZone(e.target.value)}
+            />
+            <Button onClick={addZone}>Add Zone</Button>
+          </div>
+          {allZones.length > 0 && (
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-sm text-gray-600">Viewing:</span>
+              <select
+                className="border rounded-md px-2 py-1 text-sm"
+                value={currentZone.id}
+                onChange={(e) => selectZone(e.target.value)}
+              >
+                {allZones.map(z => (
+                  <option key={z.id} value={z.id}>{z.zone_name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Current Zone Info */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Shield className="h-5 w-5" />
-            <span>Currently Monitoring: {data.currentZone.zone_name}</span>
+            <span>Currently Monitoring: {currentZone.zone_name}</span>
           </CardTitle>
           <CardDescription>
-            Zone created: {formatDate(data.currentZone.created_at)}
-            {data.currentZone.last_checked && (
-              <span> • Last checked: {formatDate(data.currentZone.last_checked)}</span>
+            Zone created: {formatDate(currentZone.created_at)}
+            {currentZone.last_checked && (
+              <span> • Last checked: {formatDate(currentZone.last_checked)}</span>
             )}
           </CardDescription>
         </CardHeader>
@@ -265,10 +344,10 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => removeZone(data.currentZone.id)}
-                disabled={removingZone === data.currentZone.id}
+                onClick={() => removeZone(currentZone.id)}
+                disabled={removingZone === currentZone.id}
               >
-                {removingZone === data.currentZone.id ? (
+                {removingZone === currentZone.id ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Removing...
@@ -364,7 +443,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
       </Card>
 
       {/* All Zones */}
-      {data.allZones.length > 1 && (
+      {allZones.length > 1 && (
         <Card>
           <CardHeader>
             <CardTitle>All Your Zones</CardTitle>
@@ -374,7 +453,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {data.allZones.map((zone) => (
+              {allZones.map((zone) => (
                 <div key={zone.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <div className="font-medium">{zone.zone_name}</div>
@@ -384,6 +463,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                   </div>
                   <div className="flex items-center space-x-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
+                    <Button variant="outline" size="sm" onClick={() => selectZone(zone.id)}>View</Button>
                     <Button
                       variant="destructive"
                       size="sm"

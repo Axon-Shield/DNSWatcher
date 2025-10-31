@@ -73,6 +73,16 @@ function HomeContent() {
         const { data } = await supabase.auth.getUser();
         if (data.user?.email) {
           setUserEmail(data.user.email);
+          // If authenticated and still on home, load dashboard automatically
+          if (currentView === "home") {
+            try {
+              const res = await fetch("/api/dashboard", { method: "GET" });
+              if (res.ok) {
+                const dash = await res.json();
+                handleLoginSuccess(dash);
+              }
+            } catch {}
+          }
         } else {
           setUserEmail(null);
         }
@@ -84,7 +94,7 @@ function HomeContent() {
     checkSession();
     const interval = setInterval(checkSession, 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentView]);
 
   const handleLoginSuccess = (data: any) => {
     setDashboardData(data);
@@ -362,21 +372,7 @@ function HomeContent() {
           </div>
         </section>
 
-        {/* Illustrative images */}
-        <section className="mb-12 grid md:grid-cols-2 gap-6">
-          <img
-            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1600&auto=format&fit=crop"
-            alt="Abstract network visualization representing DNS traffic"
-            className="w-full h-64 object-cover rounded-xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm"
-            loading="lazy"
-          />
-          <img
-            src="https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1600&auto=format&fit=crop"
-            alt="Security operations monitoring dashboard concept"
-            className="w-full h-64 object-cover rounded-xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm"
-            loading="lazy"
-          />
-        </section>
+        {/* Illustrative images removed per product focus */}
 
         {/* Registration Form */}
         <div id="registration" className="max-w-2xl mx-auto">

@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseServerClient } from "@/lib/supabase-server";
 import { createServiceClient } from "@/lib/supabase-service";
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const supabaseServer = await createSupabaseServerClient();
     const supabase = createServiceClient();
+
+    const { searchParams } = new URL(request.url);
+    const requestedZoneId = searchParams.get('zoneId');
 
     const { data: sessionData, error: sessionError } = await supabaseServer.auth.getUser();
     if (sessionError || !sessionData.user?.email) {
@@ -49,7 +52,7 @@ export async function GET(_request: NextRequest) {
       );
     }
 
-    const currentZone = allZones[0];
+    const currentZone = (requestedZoneId && allZones.find(z => z.id === requestedZoneId)) || allZones[0];
 
     const { data: zoneHistory, error: historyError } = await supabase
       .from("zone_checks")
