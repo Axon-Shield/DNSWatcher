@@ -29,7 +29,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Verify ownership and get target zones (single or all)
+    // Verify ownership and get target zones (single or all) — we update all zones to reflect account-level cadence
     let q = supabase.from("dns_zones").select("id").eq("user_id", user.id);
     if (zoneId) q = q.eq("id", zoneId);
     const { data: targetZones, error: zoneError } = await q;
@@ -53,7 +53,17 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Update zone cadence and recalculate next_check_at
+    // Update account-level cadence
+    const { error: userUpdateError } = await supabase
+      .from("users")
+      .update({ monitor_cadence_seconds: checkCadenceSeconds })
+      .eq("id", user.id);
+    if (userUpdateError) {
+      console.error("Error updating user cadence:", userUpdateError);
+      return NextResponse.json({ success: false, message: "Failed to update account cadence" }, { status: 500 });
+    }
+
+    // Update zone cadence and recalculate next_check_at using account cadence
     // If zone was already checked, schedule next check at NOW() + new cadence
     // If zone hasn't been checked yet, keep existing next_check_at but update cadence
     const now = new Date();
