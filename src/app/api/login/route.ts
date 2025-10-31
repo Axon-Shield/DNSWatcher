@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     // Get user data from our users table
     const { data: users, error: userError } = await supabase
       .from("users")
-      .select("*")
+      .select("id, email, subscription_tier, max_zones, notification_preferences")
       .eq("email", email)
       .eq("email_confirmed", true)
       .eq("password_set", true);
@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
           email: user.email,
           subscription_tier: user.subscription_tier,
           max_zones: user.max_zones,
+          notification_preferences: user.notification_preferences || null,
         },
         currentZone: null,
         zoneHistory: [],
@@ -115,7 +116,8 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email,
         subscription_tier: user.subscription_tier,
-        max_zones: user.max_zones,
+          max_zones: user.max_zones,
+          notification_preferences: user.notification_preferences || null,
       },
       currentZone: {
         id: currentZone.id,
