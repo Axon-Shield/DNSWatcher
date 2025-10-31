@@ -10,6 +10,11 @@ Ensure every code change is reflected in the `context/` documentation so future 
 - If a new behavior is introduced (e.g., endpoint param, auto-routing), document it.
 - Keep Free vs Pro features clearly stated.
 
+## Browser Debugging Rules
+- Do NOT start external Edge/Chrome with remote debugging.
+- Use Cursor's inbuilt Chrome browser to reproduce issues and capture JS console logs.
+- Prefer capturing console output directly via the inbuilt console tool when investigating frontend errors.
+
 ## What to Update
 - `project-overview.md`: Product behavior, tiers, and key flows.
 - `frontend-application.md`: Pages, components, routing, and UX states.
