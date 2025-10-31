@@ -545,7 +545,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                     frequency: 'immediate',
                   });
                 }} aria-label={channelEnabled.email ? 'Disable' : 'Enable'} className={`border border-gray-200 h-6 w-10 rounded-full relative transition-colors ${channelEnabled.email ? 'bg-green-500' : 'bg-red-500'}`}>
-                  <span className={`absolute top-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform ${channelEnabled.email ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                  <span className={`absolute top-0.5 left-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform pointer-events-none ${channelEnabled.email ? 'translate-x-4' : 'translate-x-0'}`} />
                 </button>
               </div>
             </div>
@@ -575,7 +575,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                     frequency: 'immediate',
                   });
                 }} aria-label={channelEnabled.slack ? 'Disable' : 'Enable'} className={`border border-gray-200 h-6 w-10 rounded-full relative transition-colors ${channelEnabled.slack ? 'bg-green-500' : 'bg-red-500'}`}>
-                  <span className={`absolute top-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform ${channelEnabled.slack ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                  <span className={`absolute top-0.5 left-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform pointer-events-none ${channelEnabled.slack ? 'translate-x-4' : 'translate-x-0'}`} />
                 </button>
               </div>
             </div>
@@ -605,7 +605,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                     frequency: 'immediate',
                   });
                 }} aria-label={channelEnabled.teams ? 'Disable' : 'Enable'} className={`border border-gray-200 h-6 w-10 rounded-full relative transition-colors ${channelEnabled.teams ? 'bg-green-500' : 'bg-red-500'}`}>
-                  <span className={`absolute top-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform ${channelEnabled.teams ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                  <span className={`absolute top-0.5 left-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform pointer-events-none ${channelEnabled.teams ? 'translate-x-4' : 'translate-x-0'}`} />
                 </button>
               </div>
             </div>
@@ -635,7 +635,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                     frequency: 'immediate',
                   });
                 }} aria-label={channelEnabled.webhook ? 'Disable' : 'Enable'} className={`border border-gray-200 h-6 w-10 rounded-full relative transition-colors ${channelEnabled.webhook ? 'bg-green-500' : 'bg-red-500'}`}>
-                  <span className={`absolute top-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform ${channelEnabled.webhook ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                  <span className={`absolute top-0.5 left-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform pointer-events-none ${channelEnabled.webhook ? 'translate-x-4' : 'translate-x-0'}`} />
                 </button>
               </div>
             </div>

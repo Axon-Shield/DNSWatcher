@@ -27,6 +27,7 @@ function HomeContent() {
       // Automatically log in the user after email verification
       const autoLoginUser = async () => {
         try {
+          setIsBootstrapping(true);
           const response = await fetch("/api/auto-login-after-verification", {
             method: "POST",
             headers: {
@@ -47,6 +48,8 @@ function HomeContent() {
         } catch (error) {
           console.error("Auto-login failed:", error);
           setCurrentView("login");
+        } finally {
+          setIsBootstrapping(false);
         }
       };
 
@@ -133,6 +136,21 @@ function HomeContent() {
       }
     }
   };
+
+  // Show loading spinner during auto-login or bootstrapping
+  if (isBootstrapping) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Shield className="h-16 w-16 text-blue-600 mx-auto mb-4 animate-pulse" />
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">DNSWatcher</h1>
+            <p className="text-gray-600">Loading your dashboard…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Show dashboard if user is logged in
   if (currentView === "dashboard" && dashboardData) {
