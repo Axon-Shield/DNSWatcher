@@ -81,6 +81,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   const [isSelectingZone, setIsSelectingZone] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditChannel, setShowEditChannel] = useState<null | 'email' | 'slack' | 'teams' | 'webhook'>(null);
+  const [slackStep, setSlackStep] = useState<number>(1);
   const [channelEnabled, setChannelEnabled] = useState({ email: true, slack: false, teams: false, webhook: false });
   const [channelConfig, setChannelConfig] = useState({
     email: { address: data.user.email },
@@ -653,8 +654,8 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
           <div className="relative z-10 w-full max-w-md mx-auto">
             <Card>
               <CardHeader>
-                <CardTitle>Edit {showEditChannel === 'webhook' ? 'Webhook' : showEditChannel === 'teams' ? 'Microsoft Teams' : showEditChannel === 'slack' ? 'Slack' : 'Email'}</CardTitle>
-                <CardDescription>Configure delivery settings</CardDescription>
+                <CardTitle>{showEditChannel === 'webhook' ? 'Webhook' : showEditChannel === 'teams' ? 'Microsoft Teams' : showEditChannel === 'slack' ? 'Slack' : 'Email'}</CardTitle>
+                <CardDescription>{showEditChannel === 'slack' ? 'Follow the steps to enable Slack notifications' : 'Configure delivery settings'}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -662,7 +663,32 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                     <input className="w-full border rounded-md px-3 py-2" placeholder="you@example.com" value={channelConfig.email.address} onChange={(e) => setChannelConfig(v => ({...v, email: { address: e.target.value }}))} />
                   )}
                   {showEditChannel === 'slack' && (
-                    <input className="w-full border rounded-md px-3 py-2" placeholder="Slack Incoming Webhook URL" value={channelConfig.slack.webhookUrl} onChange={(e) => setChannelConfig(v => ({...v, slack: { webhookUrl: e.target.value }}))} />
+                    <div className="space-y-4">
+                      {slackStep === 1 && (
+                        <div>
+                          <div className="font-medium mb-1">Step 1: Create Slack App</div>
+                          <p className="text-sm text-gray-600">Login to the Slack API site, create an app <strong>From Scratch</strong>, name it (e.g., "DNSWatcher"), and select your workspace.</p>
+                        </div>
+                      )}
+                      {slackStep === 2 && (
+                        <div>
+                          <div className="font-medium mb-1">Step 2: Enable Incoming Webhooks</div>
+                          <p className="text-sm text-gray-600">In the left sidebar of your Slack app, go to <strong>Incoming Webhooks</strong> and toggle it on.</p>
+                        </div>
+                      )}
+                      {slackStep === 3 && (
+                        <div>
+                          <div className="font-medium mb-1">Step 3: Add a Webhook to a Channel</div>
+                          <p className="text-sm text-gray-600">Click <strong>Add New Webhook</strong>, choose your channel, and press <strong>Install</strong>.</p>
+                        </div>
+                      )}
+                      {slackStep === 4 && (
+                        <div>
+                          <div className="font-medium mb-2">Step 4: Paste Webhook URL</div>
+                          <input className="w-full border rounded-md px-3 py-2" placeholder="Slack Incoming Webhook URL" value={channelConfig.slack.webhookUrl} onChange={(e) => setChannelConfig(v => ({...v, slack: { webhookUrl: e.target.value }}))} />
+                        </div>
+                      )}
+                    </div>
                   )}
                   {showEditChannel === 'teams' && (
                     <input className="w-full border rounded-md px-3 py-2" placeholder="Microsoft Teams Webhook URL" value={channelConfig.teams.webhookUrl} onChange={(e) => setChannelConfig(v => ({...v, teams: { webhookUrl: e.target.value }}))} />
@@ -673,9 +699,27 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                       <input className="w-full border rounded-md px-3 py-2" placeholder="Shared secret (optional)" value={channelConfig.webhook.secret} onChange={(e) => setChannelConfig(v => ({...v, webhook: { ...v.webhook, secret: e.target.value }}))} />
                     </>
                   )}
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setShowEditChannel(null)}>Cancel</Button>
-                    <Button onClick={() => setShowEditChannel(null)}>Save</Button>
+                  <div className="flex justify-between gap-2">
+                    <div>
+                      {showEditChannel === 'slack' && (
+                        <span className="text-xs text-gray-500">Step {slackStep} of 4</span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => {
+                        if (showEditChannel === 'slack' && slackStep > 1) { setSlackStep(s => s - 1); return; }
+                        setShowEditChannel(null);
+                      }}>{showEditChannel === 'slack' && slackStep > 1 ? 'Back' : 'Cancel'}</Button>
+                      {showEditChannel === 'slack' ? (
+                        slackStep < 4 ? (
+                          <Button onClick={() => setSlackStep(s => Math.min(4, s + 1))}>Next</Button>
+                        ) : (
+                          <Button onClick={() => setShowEditChannel(null)}>Save</Button>
+                        )
+                      ) : (
+                        <Button onClick={() => setShowEditChannel(null)}>Save</Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
