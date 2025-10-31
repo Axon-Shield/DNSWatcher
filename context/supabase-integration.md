@@ -61,7 +61,9 @@
 - **Status**: ✅ **FULLY OPERATIONAL** - Per-zone cadence support with 1-second cron tick
 - **Functionality**:
   - Query Google DNS over HTTPS for SOA records
-  - Handle both Answer and Authority sections (subdomain support)
+  - Handle both `Answer` and `Authority` sections (subdomain support)
+  - If `Answer` is empty, fall back to `Authority` to read the governing SOA (typical for subdomains inheriting apex SOA)
+  - Tracking a subdomain does not create/track the apex as a separate zone; the apex SOA is only read when it governs the subdomain
   - Per-zone cadence: Uses `next_check_at` to honor user-selected cadence (1s/15s/30s/60s)
   - Only processes zones where `next_check_at <= now()` or `next_check_at IS NULL`
   - Updates `last_checked` and recalculates `next_check_at` after each check

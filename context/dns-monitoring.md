@@ -30,8 +30,8 @@ example.com. 3600 IN SOA ns1.example.com. admin.example.com. (
 - **Advantages**: Reliable, fast, no rate limiting issues
 - **Response Format**: JSON with Answer and Authority arrays
 - **Parsing**: Split SOA data string into components
-- **Subdomain Support**: Checks both Answer (direct SOA) and Authority (inherited SOA) sections
-- **Implementation**: Handles subdomains that inherit SOA from parent domain
+- **Subdomain Support**: If SOA is present in `Answer`, use it. If `Answer` is empty, fall back to the SOA in `Authority` (common when a subdomain inherits SOA from the apex).
+- **Behavior**: Tracking a subdomain does not automatically track the apex; we only read the governing SOA wherever it lives. Delegated subdomains with their own SOA are tracked independently via `Answer`.
 
 ### Alternative: dns2 Library
 - **Package**: `dns2` for Node.js DNS queries
