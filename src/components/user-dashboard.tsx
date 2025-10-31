@@ -98,6 +98,9 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
     webhook: { endpoint: initialPrefs.webhook?.endpoint || '' , secret: initialPrefs.webhook?.secret || ''},
   });
 
+  const [isSavingChannel, setIsSavingChannel] = useState(false);
+  const [channelSaveSuccess, setChannelSaveSuccess] = useState<string | null>(null);
+
   const persistPreferences = async (next?: any) => {
     const prefs = next || {
       email_enabled: channelEnabled.email,
@@ -738,6 +741,11 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
+                  {channelSaveSuccess && (
+                    <div className="p-3 rounded border border-green-200 bg-green-50 text-green-800 text-sm">
+                      {channelSaveSuccess}
+                    </div>
+                  )}
                   {showEditChannel === 'email' && (
                     <input className="w-full border rounded-md px-3 py-2" placeholder="you@example.com" value={channelConfig.email.address} onChange={(e) => setChannelConfig(v => ({...v, email: { address: e.target.value }}))} />
                   )}
@@ -814,21 +822,28 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                       )}
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" onClick={() => {
-                        if (showEditChannel === 'slack' && slackStep > 1) { setSlackStep(s => s - 1); return; }
-                        if (showEditChannel === 'teams' && teamsStep > 1) { setTeamsStep(s => s - 1); return; }
-                        setShowEditChannel(null);
-                      }}>{(showEditChannel === 'slack' && slackStep > 1) || (showEditChannel === 'teams' && teamsStep > 1) ? 'Back' : 'Cancel'}</Button>
-                      {showEditChannel === 'slack' ? (
+                      {!channelSaveSuccess && (
+                        <Button variant="outline" disabled={isSavingChannel} onClick={() => {
+                          if (showEditChannel === 'slack' && slackStep > 1) { setSlackStep(s => s - 1); return; }
+                          if (showEditChannel === 'teams' && teamsStep > 1) { setTeamsStep(s => s - 1); return; }
+                          setShowEditChannel(null);
+                        }}>{(showEditChannel === 'slack' && slackStep > 1) || (showEditChannel === 'teams' && teamsStep > 1) ? 'Back' : 'Cancel'}</Button>
+                      )}
+                      {channelSaveSuccess ? (
+                        <Button onClick={() => { setShowEditChannel(null); setChannelSaveSuccess(null); setIsSavingChannel(false); }}>
+                          Close
+                        </Button>
+                      ) : (
+                      showEditChannel === 'slack' ? (
                         slackStep < 4 ? (
-                          <Button onClick={() => setSlackStep(s => Math.min(4, s + 1))}>Next</Button>
+                          <Button onClick={() => setSlackStep(s => Math.min(4, s + 1))} disabled={isSavingChannel}>Next</Button>
                         ) : (
                           <Button onClick={async () => {
+                            setIsSavingChannel(true);
                             try {
                               if (channelConfig.slack.webhookUrl) {
                                 setChannelEnabled(v => ({ ...v, slack: true }));
                                 await persistPreferences();
-                                // Fire a test notification to verify webhook works
                                 const resp = await fetch('/api/notifications/test', {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
@@ -836,47 +851,75 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                                 });
                                 const payload = await resp.json().catch(() => ({}));
                                 if (!resp.ok) {
-                                  alert(`Slack test failed: ${payload?.message || 'Unknown error'}\n${payload?.details || ''}`);
+                                  setChannelSaveSuccess(`Slack test failed: ${payload?.message || 'Unknown error'}`);
                                 } else {
-                                  alert('Slack webhook saved and test notification sent.');
+                                  setChannelSaveSuccess('Slack webhook saved. Test notification sent successfully.');
                                 }
                               }
                             } finally {
-                              setShowEditChannel(null);
+                              setIsSavingChannel(false);
                               setSlackStep(1);
                             }
-                          }}>Save</Button>
+                          }} disabled={isSavingChannel}>
+                            {isSavingChannel ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                          </Button>
                         )
                       ) : showEditChannel === 'teams' ? (
                         teamsStep < 4 ? (
-                          <Button onClick={() => setTeamsStep(s => Math.min(4, s + 1))}>Next</Button>
+                          <Button onClick={() => setTeamsStep(s => Math.min(4, s + 1))} disabled={isSavingChannel}>Next</Button>
                         ) : (
                           <Button onClick={async () => {
+                            setIsSavingChannel(true);
                             try {
                               if (channelConfig.teams.webhookUrl) {
                                 setChannelEnabled(v => ({ ...v, teams: true }));
                                 await persistPreferences();
-                                alert('Microsoft Teams webhook saved and channel enabled.');
+                                const resp = await fetch('/api/notifications/test', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ channel: 'teams', url: channelConfig.teams.webhookUrl })
+                                });
+                                const payload = await resp.json().catch(() => ({}));
+                                if (!resp.ok) {
+                                  setChannelSaveSuccess(`Teams test failed: ${payload?.message || 'Unknown error'}`);
+                                } else {
+                                  setChannelSaveSuccess('Microsoft Teams webhook saved. Test notification sent successfully.');
+                                }
                               }
                             } finally {
-                              setShowEditChannel(null);
+                              setIsSavingChannel(false);
                               setTeamsStep(1);
                             }
-                          }}>Save</Button>
+                          }} disabled={isSavingChannel}>
+                            {isSavingChannel ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                          </Button>
                         )
                       ) : (
                         <Button onClick={async () => {
+                          setIsSavingChannel(true);
                           try {
                             if (showEditChannel === 'webhook' && channelConfig.webhook.endpoint) {
                               setChannelEnabled(v => ({ ...v, webhook: true }));
                               await persistPreferences();
-                              alert('Webhook endpoint saved and channel enabled.');
+                              const resp = await fetch('/api/notifications/test', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ channel: 'webhook', url: channelConfig.webhook.endpoint })
+                              });
+                              const payload = await resp.json().catch(() => ({}));
+                              if (!resp.ok) {
+                                setChannelSaveSuccess(`Webhook test failed: ${payload?.message || 'Unknown error'}`);
+                              } else {
+                                setChannelSaveSuccess('Webhook endpoint saved. Test notification sent successfully.');
+                              }
                             }
                           } finally {
-                            setShowEditChannel(null);
+                            setIsSavingChannel(false);
                           }
-                        }}>Save</Button>
-                      )}
+                        }} disabled={isSavingChannel}>
+                          {isSavingChannel ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                        </Button>
+                      ))}
                     </div>
                   </div>
                 </div>
