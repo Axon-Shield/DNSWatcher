@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,8 @@ import {
   Settings,
   Lock,
   ArrowRight,
-  Plus
+  Plus,
+  RefreshCw
 } from "lucide-react";
 import { Bell, Mail, Slack, Webhook, Pencil, Check, X } from "lucide-react";
 import Link from "next/link";
@@ -76,14 +77,18 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   const [currentZone, setCurrentZone] = useState<Zone | null>(data.currentZone || null);
   const [zoneHistory, setZoneHistory] = useState<ZoneHistory[]>(data.zoneHistory);
   const [allZones, setAllZones] = useState<Zone[]>(data.allZones);
+  const [selectedZones, setSelectedZones] = useState<Set<string>>(new Set(data.currentZone ? [data.currentZone.id] : []));
+  const [zoneHistories, setZoneHistories] = useState<Record<string, ZoneHistory[]>>(data.currentZone ? { [data.currentZone.id]: data.zoneHistory } : {});
   const [currentCadence, setCurrentCadence] = useState<number>(data.currentZone?.check_cadence_seconds || 60);
   const [newZone, setNewZone] = useState("");
   const [isAddingZone, setIsAddingZone] = useState(false);
   const [isSelectingZone, setIsSelectingZone] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditChannel, setShowEditChannel] = useState<null | 'email' | 'slack' | 'teams' | 'webhook'>(null);
   const [slackStep, setSlackStep] = useState<number>(1);
   const [teamsStep, setTeamsStep] = useState<number>(1);
+  const autoUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const initialPrefs = data.user.notification_preferences || {};
   const [channelEnabled, setChannelEnabled] = useState({
     email: initialPrefs.email_enabled ?? true,
@@ -123,6 +128,68 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
     return format(new Date(dateString), 'MMM dd, HH:mm');
   };
 
+  // Fetch zone history for a specific zone
+  const fetchZoneHistory = async (zoneId: string): Promise<ZoneHistory[]> => {
+    try {
+      const res = await fetch(`/api/dashboard?zoneId=${encodeURIComponent(zoneId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        return data.zoneHistory || [];
+      }
+    } catch (e) {
+      console.error(`Error fetching history for zone ${zoneId}:`, e);
+    }
+    return [];
+  };
+
+  // Refresh all selected zones
+  const refreshSelectedZones = useCallback(async () => {
+    if (selectedZones.size === 0 || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      // Refresh zone list first
+      const res = await fetch('/api/dashboard');
+      if (res.ok) {
+        const dashboardData = await res.json();
+        setAllZones(dashboardData.allZones || []);
+        
+        // Update histories for selected zones in parallel
+        const newHistories: Record<string, ZoneHistory[]> = { ...zoneHistories };
+        await Promise.all(Array.from(selectedZones).map(async (zoneId) => {
+          const history = await fetchZoneHistory(zoneId);
+          newHistories[zoneId] = history;
+        }));
+        setZoneHistories(newHistories);
+        
+        // If current zone is selected, update its history
+        if (currentZone && selectedZones.has(currentZone.id)) {
+          setZoneHistory(newHistories[currentZone.id] || []);
+        }
+      }
+    } catch (e) {
+      console.error('Error refreshing zones:', e);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [selectedZones, isRefreshing, currentZone, zoneHistories]);
+
+  // Auto-update every 5 seconds
+  useEffect(() => {
+    if (selectedZones.size === 0) return;
+    
+    refreshSelectedZones(); // Initial refresh
+    
+    autoUpdateIntervalRef.current = setInterval(() => {
+      refreshSelectedZones();
+    }, 5000); // 5 seconds
+    
+    return () => {
+      if (autoUpdateIntervalRef.current) {
+        clearInterval(autoUpdateIntervalRef.current);
+      }
+    };
+  }, [selectedZones, refreshSelectedZones]); // Re-run when selected zones change
+
   // Filter data based on time range
   const filteredHistory = useMemo(() => {
     if (timeFilter === 'all') return zoneHistory;
@@ -161,6 +228,24 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
       changeDetails: change.change_details
     }));
   }, [filteredHistory]);
+  
+  // Toggle zone selection
+  const toggleZoneSelection = async (zoneId: string) => {
+    const newSelected = new Set(selectedZones);
+    if (newSelected.has(zoneId)) {
+      newSelected.delete(zoneId);
+      // Remove history if unselected
+      const newHistories = { ...zoneHistories };
+      delete newHistories[zoneId];
+      setZoneHistories(newHistories);
+    } else {
+      newSelected.add(zoneId);
+      // Fetch history for newly selected zone
+      const history = await fetchZoneHistory(zoneId);
+      setZoneHistories({ ...zoneHistories, [zoneId]: history });
+    }
+    setSelectedZones(newSelected);
+  };
 
   const removeZone = async (zoneId: string) => {
     const zone = allZones.find(z => z.id === zoneId);
@@ -275,6 +360,11 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         setZoneHistory(next.zoneHistory || []);
         setAllZones(next.allZones || []);
         setCurrentCadence(next.currentZone?.check_cadence_seconds || 60);
+        // Auto-select zone when viewing
+        if (next.currentZone) {
+          setSelectedZones(new Set([zoneId]));
+          setZoneHistories({ [zoneId]: next.zoneHistory || [] });
+        }
       } else {
         // If dashboard returns non-OK (shouldn't after API change), fallback to empty state
         setCurrentZone(null);
@@ -377,25 +467,35 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
           ) : (
             <div className="overflow-hidden rounded-lg border">
               <div className="grid grid-cols-12 bg-gray-50 text-xs font-semibold text-gray-600 px-4 py-2">
-                <div className="col-span-4">Zone</div>
-                <div className="col-span-3">Created</div>
+                <div className="col-span-1">Select</div>
+                <div className="col-span-3">Zone</div>
+                <div className="col-span-2">Created</div>
                 <div className="col-span-3">Last checked</div>
-                <div className="col-span-2 text-right">Actions</div>
+                <div className="col-span-3 text-right">Actions</div>
               </div>
               <div className="divide-y">
                 {allZones.map((zone) => {
                   const isCurrent = currentZone ? (zone.id === currentZone.id) : false;
+                  const isSelected = selectedZones.has(zone.id);
                   return (
-                    <div key={zone.id} className={`grid grid-cols-12 items-center px-4 py-3 ${isCurrent ? 'bg-blue-50/50' : ''}`}>
-                      <div className="col-span-4">
+                    <div key={zone.id} className={`grid grid-cols-12 items-center px-4 py-3 ${isCurrent ? 'bg-blue-50/50' : ''} ${isSelected ? 'bg-green-50/30' : ''}`}>
+                      <div className="col-span-1 flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleZoneSelection(zone.id)}
+                          className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="col-span-3">
                         <div className="font-medium flex items-center gap-2">
                           {zone.zone_name}
                           {isCurrent && <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded">current</span>}
                         </div>
                       </div>
-                      <div className="col-span-3 text-sm text-gray-600">{formatDate(zone.created_at)}</div>
+                      <div className="col-span-2 text-sm text-gray-600">{formatDate(zone.created_at)}</div>
                       <div className="col-span-3 text-sm text-gray-600">{zone.last_checked ? formatDate(zone.last_checked) : '—'}</div>
-                      <div className="col-span-2 flex items-center justify-end gap-2">
+                      <div className="col-span-3 flex items-center justify-end gap-2">
                         <Button variant="outline" size="sm" onClick={() => selectZone(zone.id)} disabled={isSelectingZone && isCurrent}>
                           {isSelectingZone && isCurrent ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'View'}
                         </Button>
@@ -413,6 +513,62 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                         </Button>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Selected Zones Data Cards */}
+          {selectedZones.size > 0 && (
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Selected Zones Data</h3>
+                <Button variant="outline" size="sm" onClick={refreshSelectedZones} disabled={isRefreshing}>
+                  {isRefreshing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                  {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Array.from(selectedZones).map(zoneId => {
+                  const zone = allZones.find(z => z.id === zoneId);
+                  if (!zone) return null;
+                  const history = zoneHistories[zoneId] || [];
+                  const changes = history.filter(h => h.is_change);
+                  return (
+                    <Card key={zoneId}>
+                      <CardHeader>
+                        <CardTitle className="text-base">{zone.zone_name}</CardTitle>
+                        <CardDescription>
+                          {changes.length} change{changes.length !== 1 ? 's' : ''} detected
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Last Checked:</span>
+                            <span className="font-medium">{zone.last_checked ? formatDate(zone.last_checked) : 'Never'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Created:</span>
+                            <span className="font-medium">{formatDate(zone.created_at)}</span>
+                          </div>
+                          {changes.length > 0 && (
+                            <div className="mt-3 pt-3 border-t">
+                              <div className="text-xs font-semibold text-gray-600 mb-2">Recent Changes:</div>
+                              <div className="space-y-1 max-h-32 overflow-y-auto">
+                                {changes.slice(0, 3).map((change, idx) => (
+                                  <div key={change.id || idx} className="text-xs">
+                                    <span className="font-mono text-orange-600">{change.soa_serial}</span>
+                                    <span className="text-gray-500 ml-2">{formatDateShort(change.checked_at)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
                   );
                 })}
               </div>
