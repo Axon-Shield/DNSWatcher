@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     // Get user data from our users table
     const { data: users, error: userError } = await supabase
       .from("users")
-      .select("*")
+      .select("id, email, subscription_tier, max_zones, notification_preferences")
       .eq("email", email)
       .eq("email_confirmed", true)
       .eq("password_set", true);
@@ -73,6 +73,7 @@ export async function GET(request: NextRequest) {
         email: user.email,
         subscription_tier: user.subscription_tier,
         max_zones: user.max_zones,
+        notification_preferences: user.notification_preferences || null,
       },
       currentZone: {
         id: currentZone.id,

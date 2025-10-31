@@ -49,6 +49,7 @@ interface User {
   email: string;
   subscription_tier: string;
   max_zones: number;
+  notification_preferences?: any;
 }
 
 interface DashboardData {
@@ -83,13 +84,33 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   const [showEditChannel, setShowEditChannel] = useState<null | 'email' | 'slack' | 'teams' | 'webhook'>(null);
   const [slackStep, setSlackStep] = useState<number>(1);
   const [teamsStep, setTeamsStep] = useState<number>(1);
-  const [channelEnabled, setChannelEnabled] = useState({ email: true, slack: false, teams: false, webhook: false });
-  const [channelConfig, setChannelConfig] = useState({
-    email: { address: data.user.email },
-    slack: { webhookUrl: '' },
-    teams: { webhookUrl: '' },
-    webhook: { endpoint: '' , secret: ''},
+  const initialPrefs = data.user.notification_preferences || {};
+  const [channelEnabled, setChannelEnabled] = useState({
+    email: initialPrefs.email_enabled ?? true,
+    slack: initialPrefs.slack?.enabled ?? false,
+    teams: initialPrefs.teams?.enabled ?? false,
+    webhook: initialPrefs.webhook?.enabled ?? false,
   });
+  const [channelConfig, setChannelConfig] = useState({
+    email: { address: initialPrefs.email_address || data.user.email },
+    slack: { webhookUrl: initialPrefs.slack?.webhookUrl || '' },
+    teams: { webhookUrl: initialPrefs.teams?.webhookUrl || '' },
+    webhook: { endpoint: initialPrefs.webhook?.endpoint || '' , secret: initialPrefs.webhook?.secret || ''},
+  });
+
+  const persistPreferences = async (next?: any) => {
+    const prefs = next || {
+      email_enabled: channelEnabled.email,
+      email_address: channelConfig.email.address,
+      slack: { enabled: channelEnabled.slack, webhookUrl: channelConfig.slack.webhookUrl },
+      teams: { enabled: channelEnabled.teams, webhookUrl: channelConfig.teams.webhookUrl },
+      webhook: { enabled: channelEnabled.webhook, endpoint: channelConfig.webhook.endpoint, secret: channelConfig.webhook.secret },
+      frequency: 'immediate',
+    };
+    try {
+      await fetch('/api/notifications/preferences', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ preferences: prefs }) });
+    } catch {}
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -504,10 +525,10 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 </div>
               </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setShowEditChannel('email')} aria-label="Edit Email">
+                <Button variant="ghost" size="sm" className="border border-gray-200" onClick={() => setShowEditChannel('email')} aria-label="Edit Email">
                 <Pencil className="h-4 w-4" />
               </Button>
-              <Button size="icon" variant="ghost" onClick={() => setChannelEnabled(v => ({...v, email: !v.email}))} aria-label={channelEnabled.email ? 'Disable' : 'Enable'} className={channelEnabled.email ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}>
+                <Button size="icon" variant="ghost" onClick={() => { const next = { ...channelEnabled, email: !channelEnabled.email }; setChannelEnabled(next); persistPreferences({ ...initialPrefs, email_enabled: next.email }); }} aria-label={channelEnabled.email ? 'Disable' : 'Enable'} className={`border border-gray-200 ${channelEnabled.email ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}`}>
                 {channelEnabled.email ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
               </Button>
               </div>
@@ -523,10 +544,10 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => { setShowEditChannel('slack'); setSlackStep(1); }} aria-label="Edit Slack">
+                <Button variant="ghost" size="sm" className="border border-gray-200" onClick={() => { setShowEditChannel('slack'); setSlackStep(1); }} aria-label="Edit Slack">
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button size="icon" variant="ghost" onClick={() => setChannelEnabled(v => ({...v, slack: !v.slack}))} aria-label={channelEnabled.slack ? 'Disable' : 'Enable'} className={channelEnabled.slack ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}>
+                <Button size="icon" variant="ghost" onClick={() => { const next = { ...channelEnabled, slack: !channelEnabled.slack }; setChannelEnabled(next); persistPreferences(); }} aria-label={channelEnabled.slack ? 'Disable' : 'Enable'} className={`border border-gray-200 ${channelEnabled.slack ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}`}>
                   {channelEnabled.slack ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                 </Button>
               </div>
@@ -542,10 +563,10 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => { setShowEditChannel('teams'); setTeamsStep(1); }} aria-label="Edit Teams">
+                <Button variant="ghost" size="sm" className="border border-gray-200" onClick={() => { setShowEditChannel('teams'); setTeamsStep(1); }} aria-label="Edit Teams">
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button size="icon" variant="ghost" onClick={() => setChannelEnabled(v => ({...v, teams: !v.teams}))} aria-label={channelEnabled.teams ? 'Disable' : 'Enable'} className={channelEnabled.teams ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}>
+                <Button size="icon" variant="ghost" onClick={() => { const next = { ...channelEnabled, teams: !channelEnabled.teams }; setChannelEnabled(next); persistPreferences(); }} aria-label={channelEnabled.teams ? 'Disable' : 'Enable'} className={`border border-gray-200 ${channelEnabled.teams ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}`}>
                   {channelEnabled.teams ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                 </Button>
               </div>
@@ -561,10 +582,10 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setShowEditChannel('webhook')} aria-label="Edit Webhook">
+                <Button variant="ghost" size="sm" className="border border-gray-200" onClick={() => setShowEditChannel('webhook')} aria-label="Edit Webhook">
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button size="icon" variant="ghost" onClick={() => setChannelEnabled(v => ({...v, webhook: !v.webhook}))} aria-label={channelEnabled.webhook ? 'Disable' : 'Enable'} className={channelEnabled.webhook ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}>
+                <Button size="icon" variant="ghost" onClick={() => { const next = { ...channelEnabled, webhook: !channelEnabled.webhook }; setChannelEnabled(next); persistPreferences(); }} aria-label={channelEnabled.webhook ? 'Disable' : 'Enable'} className={`border border-gray-200 ${channelEnabled.webhook ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}`}>
                   {channelEnabled.webhook ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                 </Button>
               </div>
@@ -760,6 +781,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                                 if (!resp.ok) throw new Error('Failed to send test');
                                 alert('Test notification sent to Slack!');
                                 setChannelEnabled(v => ({ ...v, slack: true }));
+                                await persistPreferences();
                               }
                             } catch (e) {
                               alert('Could not send Slack test. Please verify the webhook URL.');
@@ -780,6 +802,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                                 if (!resp.ok) throw new Error('Failed to send test');
                                 alert('Test notification sent to Microsoft Teams!');
                                 setChannelEnabled(v => ({ ...v, teams: true }));
+                                await persistPreferences();
                               }
                             } catch (e) {
                               alert('Could not send Teams test. Please verify the webhook URL.');
@@ -797,6 +820,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
                               if (!resp.ok) throw new Error('Failed to send test');
                               alert('Test notification sent to Webhook endpoint!');
                               setChannelEnabled(v => ({ ...v, webhook: true }));
+                              await persistPreferences();
                             }
                           } catch (e) {
                             alert('Could not send Webhook test. Please verify the endpoint URL.');
