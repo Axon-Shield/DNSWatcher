@@ -22,6 +22,7 @@ import {
   ArrowRight,
   Plus
 } from "lucide-react";
+import { Bell, Mail, Slack, Webhook } from "lucide-react";
 import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Dot } from 'recharts';
 import { format, subDays, subWeeks, subMonths, isWithinInterval } from 'date-fns';
@@ -79,6 +80,14 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   const [isAddingZone, setIsAddingZone] = useState(false);
   const [isSelectingZone, setIsSelectingZone] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditChannel, setShowEditChannel] = useState<null | 'email' | 'slack' | 'teams' | 'webhook'>(null);
+  const [channelEnabled, setChannelEnabled] = useState({ email: true, slack: false, teams: false, webhook: false });
+  const [channelConfig, setChannelConfig] = useState({
+    email: { address: data.user.email },
+    slack: { webhookUrl: '' },
+    teams: { webhookUrl: '' },
+    webhook: { endpoint: '' , secret: ''},
+  });
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -553,6 +562,127 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         </CardContent>
       </Card>
 
+      {/* Notifications Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              <CardTitle>Notifications</CardTitle>
+            </div>
+            <CardDescription>Choose how you want to be alerted</CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Email */}
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-white">
+              <div className="flex items-center gap-3">
+                <Mail className="h-5 w-5 text-blue-600" />
+                <div>
+                  <div className="font-medium">Email</div>
+                  <div className="text-sm text-gray-500">{channelConfig.email.address}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowEditChannel('email')}>Edit</Button>
+                <Button size="sm" onClick={() => setChannelEnabled(v => ({...v, email: !v.email}))}>
+                  {channelEnabled.email ? 'Disable' : 'Enable'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Slack */}
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-white">
+              <div className="flex items-center gap-3">
+                <Slack className="h-5 w-5 text-purple-600" />
+                <div>
+                  <div className="font-medium">Slack</div>
+                  <div className="text-sm text-gray-500 truncate max-w-[240px]">{channelConfig.slack.webhookUrl || 'Not configured'}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowEditChannel('slack')}>Edit</Button>
+                <Button size="sm" onClick={() => setChannelEnabled(v => ({...v, slack: !v.slack}))}>
+                  {channelEnabled.slack ? 'Disable' : 'Enable'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Microsoft Teams */}
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-white">
+              <div className="flex items-center gap-3">
+                <Slack className="h-5 w-5 text-indigo-600" />
+                <div>
+                  <div className="font-medium">Microsoft Teams</div>
+                  <div className="text-sm text-gray-500 truncate max-w-[240px]">{channelConfig.teams.webhookUrl || 'Not configured'}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowEditChannel('teams')}>Edit</Button>
+                <Button size="sm" onClick={() => setChannelEnabled(v => ({...v, teams: !v.teams}))}>
+                  {channelEnabled.teams ? 'Disable' : 'Enable'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Webhook */}
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-white">
+              <div className="flex items-center gap-3">
+                <Webhook className="h-5 w-5 text-emerald-600" />
+                <div>
+                  <div className="font-medium">Webhook</div>
+                  <div className="text-sm text-gray-500 truncate max-w-[240px]">{channelConfig.webhook.endpoint || 'Not configured'}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowEditChannel('webhook')}>Edit</Button>
+                <Button size="sm" onClick={() => setChannelEnabled(v => ({...v, webhook: !v.webhook}))}>
+                  {channelEnabled.webhook ? 'Disable' : 'Enable'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit Channel Modal */}
+      {showEditChannel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowEditChannel(null)} />
+          <div className="relative z-10 w-full max-w-md mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle>Edit {showEditChannel === 'webhook' ? 'Webhook' : showEditChannel === 'teams' ? 'Microsoft Teams' : showEditChannel === 'slack' ? 'Slack' : 'Email'}</CardTitle>
+                <CardDescription>Configure delivery settings</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {showEditChannel === 'email' && (
+                    <input className="w-full border rounded-md px-3 py-2" placeholder="you@example.com" value={channelConfig.email.address} onChange={(e) => setChannelConfig(v => ({...v, email: { address: e.target.value }}))} />
+                  )}
+                  {showEditChannel === 'slack' && (
+                    <input className="w-full border rounded-md px-3 py-2" placeholder="Slack Incoming Webhook URL" value={channelConfig.slack.webhookUrl} onChange={(e) => setChannelConfig(v => ({...v, slack: { webhookUrl: e.target.value }}))} />
+                  )}
+                  {showEditChannel === 'teams' && (
+                    <input className="w-full border rounded-md px-3 py-2" placeholder="Microsoft Teams Webhook URL" value={channelConfig.teams.webhookUrl} onChange={(e) => setChannelConfig(v => ({...v, teams: { webhookUrl: e.target.value }}))} />
+                  )}
+                  {showEditChannel === 'webhook' && (
+                    <>
+                      <input className="w-full border rounded-md px-3 py-2" placeholder="HTTPS endpoint" value={channelConfig.webhook.endpoint} onChange={(e) => setChannelConfig(v => ({...v, webhook: { ...v.webhook, endpoint: e.target.value }}))} />
+                      <input className="w-full border rounded-md px-3 py-2" placeholder="Shared secret (optional)" value={channelConfig.webhook.secret} onChange={(e) => setChannelConfig(v => ({...v, webhook: { ...v.webhook, secret: e.target.value }}))} />
+                    </>
+                  )}
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setShowEditChannel(null)}>Cancel</Button>
+                    <Button onClick={() => setShowEditChannel(null)}>Save</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
       {/* Zone History */}
       <Card>
         <CardHeader>

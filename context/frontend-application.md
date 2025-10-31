@@ -10,11 +10,13 @@ DNSWatcher uses Next.js 14 with the App Router for modern React development patt
 - **Styling**: Tailwind CSS with gradient backgrounds
 - **Pricing/Tiers**: Free tier cadence = 60s; Pro tier cadences = 60s/30s/15s/1s
 - **Components**: Shield, Eye, AlertTriangle, Mail, LogIn icons from Lucide React
+ - **Components**: Shield, Eye, AlertTriangle, Mail, LogIn, Bell, Slack, Webhook icons from Lucide React
 - **State Management**: `currentView` state for routing between views
 - **Features**: 
   - Registration form with email verification flow
   - Login form for existing users
   - User dashboard with zone management
+  - Notifications card: Email, Slack, Microsoft Teams, Webhook with enable/disable and edit modals
   - Zone removal with proper state management
 
 ### Layout (`src/app/layout.tsx`)
