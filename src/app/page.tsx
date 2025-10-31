@@ -9,10 +9,12 @@ import LoginForm from "@/components/forms/login-form";
 import ForgotPassword from "@/components/forms/forgot-password";
 import UserDashboard from "@/components/user-dashboard";
 import ErrorBoundary from "@/components/error-boundary";
+import { createClient as createBrowserSupabaseClient } from "@/lib/supabase-client";
 
 function HomeContent() {
   const [currentView, setCurrentView] = useState<"home" | "login" | "forgot-password" | "dashboard">("home");
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
   // Auto-login after email verification
@@ -50,6 +52,39 @@ function HomeContent() {
       autoLoginUser();
     }
   }, [searchParams]);
+
+  // Detect existing session and enforce 30-minute cap
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+
+    const checkSession = async () => {
+      try {
+        const expiryCookie = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("app_session_expires_at="))
+          ?.split("=")[1];
+
+        if (expiryCookie && Number(expiryCookie) < Date.now()) {
+          await supabase.auth.signOut();
+          setUserEmail(null);
+          return;
+        }
+
+        const { data } = await supabase.auth.getUser();
+        if (data.user?.email) {
+          setUserEmail(data.user.email);
+        } else {
+          setUserEmail(null);
+        }
+      } catch {
+        setUserEmail(null);
+      }
+    };
+
+    checkSession();
+    const interval = setInterval(checkSession, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLoginSuccess = (data: any) => {
     setDashboardData(data);
@@ -170,15 +205,39 @@ function HomeContent() {
             <Shield className="h-8 w-8 text-blue-600" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">DNSWatcher</h1>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setCurrentView("login")}
-              className="flex items-center space-x-2"
-            >
-              <LogIn className="h-4 w-4" />
-              <span>Sign In</span>
-            </Button>
+          <div className="flex items-center space-x-3">
+            {userEmail ? (
+              <>
+                <span className="text-sm text-gray-700 dark:text-gray-200">Signed in as {userEmail}</span>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch("/api/dashboard", { method: "GET" });
+                      if (res.ok) {
+                        const data = await res.json();
+                        handleLoginSuccess(data);
+                      } else {
+                        setCurrentView("login");
+                      }
+                    } catch {
+                      setCurrentView("login");
+                    }
+                  }}
+                >
+                  Go to DNS Zones
+                </Button>
+              </>
+            ) : (
+              <Button 
+                variant="outline" 
+                onClick={() => setCurrentView("login")}
+                className="flex items-center space-x-2"
+              >
+                <LogIn className="h-4 w-4" />
+                <span>Sign In</span>
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -187,18 +246,21 @@ function HomeContent() {
       <main className="container mx-auto px-4 py-12">
         <div className="text-center mb-16">
           <h2 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
-            Protect Your DNS Infrastructure
+            DNS change detection that actually prevents incidents
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            Monitor your DNS zones for unauthorized changes and get instant notifications
-            when your domain&apos;s SOA records are modified. Stay ahead of DNS hijacking attacks.
+            DNSWatcher monitors your zones every 30 seconds and alerts you only when it matters.
+            Smart filtering avoids noise, while multi-server consensus reduces false positives.
           </p>
           <div className="flex justify-center space-x-4">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-              Start Monitoring
+            <Button size="lg" className="bg-blue-600 hover:bg-blue-700" onClick={() => {
+              const el = document.getElementById("registration");
+              el?.scrollIntoView({ behavior: "smooth" });
+            }}>
+              Add a DNS Zone
             </Button>
-            <Button size="lg" variant="outline">
-              Learn More
+            <Button size="lg" variant="outline" onClick={() => setCurrentView("login")}>
+              Sign In
             </Button>
           </div>
         </div>
@@ -207,36 +269,34 @@ function HomeContent() {
         <div className="grid md:grid-cols-3 gap-8 mb-16">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
             <Eye className="h-12 w-12 text-blue-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Real-time Monitoring</h3>
+            <h3 className="text-xl font-semibold mb-2">High-frequency monitoring</h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Continuous monitoring of your DNS zones with checks every minute
-                to detect unauthorized changes immediately.
+                Checks every 30 seconds with throttling to keep providers happy and your data fresh.
               </p>
           </div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
             <AlertTriangle className="h-12 w-12 text-orange-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Instant Alerts</h3>
+            <h3 className="text-xl font-semibold mb-2">Actionable alerts</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Get notified instantly via email when SOA records change, helping you
-              respond quickly to potential DNS hijacking attempts.
+              Email notifications with cooldown and stability checks to prevent alert fatigue.
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
             <Mail className="h-12 w-12 text-green-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Email Notifications</h3>
+            <h3 className="text-xl font-semibold mb-2">Built on Supabase</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Receive detailed email alerts with change history and recommendations
-              for securing your DNS infrastructure.
+              Secure auth, serverless edge functions, and pg_cron power the monitoring engine.
             </p>
           </div>
         </div>
 
         {/* Registration Form */}
-        <div className="max-w-2xl mx-auto">
+        <div id="registration" className="max-w-2xl mx-auto">
           <ErrorBoundary>
             <RegistrationForm 
               onSuccess={() => setCurrentView("login")}
               onRedirectToLogin={(email) => {
+                // Only show login after verification; this path should be rare now
                 setCurrentView("login");
                 // You could also pre-fill the email in the login form
               }}

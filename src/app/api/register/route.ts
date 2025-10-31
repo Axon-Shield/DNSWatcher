@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       userId = existingUser.id;
       
-      // If user already has password set, redirect to login
-      if (existingUser.password_set) {
+      // Only redirect to login if the account is fully verified
+      if (existingUser.password_set && existingUser.email_confirmed) {
         return NextResponse.json(
           { 
             message: "Account already exists. Please sign in instead.",
@@ -111,8 +111,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingZone) {
-      // If user has password set and zone exists, redirect to login
-      if (existingUser && existingUser.password_set) {
+      // Only redirect to login if account is verified and zone exists
+      if (existingUser && existingUser.password_set && existingUser.email_confirmed) {
         return NextResponse.json(
           { 
             message: "Account and DNS zone already exist. Please sign in instead.",

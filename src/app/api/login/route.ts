@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
+import { createClient as createSupabaseServerClient } from "@/lib/supabase-server";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -13,9 +14,10 @@ export async function POST(request: NextRequest) {
     const { email, password } = loginSchema.parse(body);
 
     const supabase = createServiceClient();
+    const supabaseServer = await createSupabaseServerClient();
 
-    // Authenticate user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    // Authenticate user with Supabase Auth and set httpOnly cookies via server client
+    const { data: authData, error: authError } = await supabaseServer.auth.signInWithPassword({
       email,
       password,
     });
@@ -89,7 +91,8 @@ export async function POST(request: NextRequest) {
       console.error("Error fetching zone history:", historyError);
     }
 
-    return NextResponse.json({
+    // Issue an app-level session expiry cookie for 30 minutes to cap session duration
+    const response = NextResponse.json({
       success: true,
       user: {
         id: user.id,
@@ -107,6 +110,17 @@ export async function POST(request: NextRequest) {
       zoneHistory: zoneHistory || [],
       allZones: allZones || [],
     });
+
+    const expires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    response.cookies.set("app_session_expires_at", String(expires.getTime()), {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: true,
+      expires,
+      path: "/",
+    });
+
+    return response;
 
   } catch (error) {
     console.error("Login error:", error);
