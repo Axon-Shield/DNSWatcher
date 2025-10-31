@@ -54,7 +54,7 @@ interface User {
 
 interface DashboardData {
   user: User;
-  currentZone: Zone;
+  currentZone: Zone | null;
   zoneHistory: ZoneHistory[];
   allZones: Zone[];
 }
@@ -73,10 +73,10 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('7d');
   const [updatingCadence, setUpdatingCadence] = useState(false);
   // Local state derived from props to support filtering and adding zones
-  const [currentZone, setCurrentZone] = useState<Zone>(data.currentZone);
+  const [currentZone, setCurrentZone] = useState<Zone | null>(data.currentZone || null);
   const [zoneHistory, setZoneHistory] = useState<ZoneHistory[]>(data.zoneHistory);
   const [allZones, setAllZones] = useState<Zone[]>(data.allZones);
-  const [currentCadence, setCurrentCadence] = useState<number>(data.currentZone.check_cadence_seconds || 60);
+  const [currentCadence, setCurrentCadence] = useState<number>(data.currentZone?.check_cadence_seconds || 60);
   const [newZone, setNewZone] = useState("");
   const [isAddingZone, setIsAddingZone] = useState(false);
   const [isSelectingZone, setIsSelectingZone] = useState(false);
@@ -191,9 +191,19 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
       setRemovedZoneName(result.zoneName);
       setTimeout(() => setRemovedZoneName(null), 3000);
 
-      if (onZoneRemoved) {
-        onZoneRemoved(zoneId);
+      // Update local state to reflect removal immediately
+      const remaining = allZones.filter(z => z.id !== zoneId);
+      setAllZones(remaining);
+      if (currentZone && currentZone.id === zoneId) {
+        if (remaining.length > 0) {
+          await selectZone(remaining[0].id);
+        } else {
+          setCurrentZone(null);
+          setZoneHistory([]);
+        }
       }
+
+      if (onZoneRemoved) onZoneRemoved(zoneId);
     } catch (error) {
       console.error("Error removing zone:", error);
       alert(error instanceof Error ? error.message : "Failed to remove zone");
@@ -214,6 +224,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
   };
 
   const updateCadence = async (newCadence: number) => {
+    if (!currentZone) return;
     if (newCadence === currentCadence) return;
     
     setUpdatingCadence(true);
@@ -260,10 +271,15 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
       const res = await fetch(`/api/dashboard?zoneId=${encodeURIComponent(zoneId)}`);
       if (res.ok) {
         const next = await res.json();
-        setCurrentZone(next.currentZone);
+        setCurrentZone(next.currentZone || null);
         setZoneHistory(next.zoneHistory || []);
         setAllZones(next.allZones || []);
-        setCurrentCadence(next.currentZone.check_cadence_seconds || 60);
+        setCurrentCadence(next.currentZone?.check_cadence_seconds || 60);
+      } else {
+        // If dashboard returns non-OK (shouldn't after API change), fallback to empty state
+        setCurrentZone(null);
+        setZoneHistory([]);
+        setAllZones([]);
       }
     } catch {}
     finally {
@@ -368,7 +384,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
               </div>
               <div className="divide-y">
                 {allZones.map((zone) => {
-                  const isCurrent = zone.id === currentZone.id;
+                  const isCurrent = currentZone ? (zone.id === currentZone.id) : false;
                   return (
                     <div key={zone.id} className={`grid grid-cols-12 items-center px-4 py-3 ${isCurrent ? 'bg-blue-50/50' : ''}`}>
                       <div className="col-span-4">

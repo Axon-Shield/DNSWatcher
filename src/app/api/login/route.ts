@@ -65,14 +65,31 @@ export async function POST(request: NextRequest) {
       console.error("Error fetching all zones:", allZonesError);
     }
 
+    // Allow login even when user has no zones yet
     if (!allZones || allZones.length === 0) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: "No DNS zones found for this account. Please register a zone first." 
+      const response = NextResponse.json({
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          subscription_tier: user.subscription_tier,
+          max_zones: user.max_zones,
         },
-        { status: 404 }
-      );
+        currentZone: null,
+        zoneHistory: [],
+        allZones: [],
+      });
+
+      const expires = new Date(Date.now() + 30 * 60 * 1000);
+      response.cookies.set("app_session_expires_at", String(expires.getTime()), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: true,
+        expires,
+        path: "/",
+      });
+
+      return response;
     }
 
     // Use the first zone as the current zone

@@ -45,11 +45,21 @@ export async function GET(request: NextRequest) {
       console.error("Error fetching all zones:", allZonesError);
     }
 
+    // Allow dashboard to render without zones (empty state)
     if (!allZones || allZones.length === 0) {
-      return NextResponse.json(
-        { message: "No DNS zones found for this account. Please register a zone first." },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          subscription_tier: user.subscription_tier,
+          max_zones: user.max_zones,
+          notification_preferences: user.notification_preferences || null,
+        },
+        currentZone: null,
+        zoneHistory: [],
+        allZones: [],
+      });
     }
 
     const currentZone = (requestedZoneId && allZones.find(z => z.id === requestedZoneId)) || allZones[0];
