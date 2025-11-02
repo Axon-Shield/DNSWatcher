@@ -24,6 +24,8 @@ example.com. 3600 IN SOA ns1.example.com. admin.example.com. (
    - If any resolver fails, requires majority of successful resolvers (e.g., 2/2 if one fails, 2/3 if all succeed)
    - This prevents false positives from recursive resolver inconsistencies or authoritative nameserver sync issues
    - **Change confirmation**: On first detection of a change, waits 200ms and re-queries all resolvers; change must be confirmed by majority on second check with same serial
+   - **Deduplication**: Before sending notifications, checks if we've already notified for this exact serial in the last 15 minutes. Prevents duplicate notifications when DNS providers auto-increment SOA serials or during DNS propagation delays
+   - **Atomic updates**: Updates `last_soa_serial` immediately after change confirmation and before sending notifications to prevent race conditions
    - Sampled serials are recorded in `zone_checks.change_details` for diagnostics (e.g., `Multi-resolver consensus: 2/3 agree (google,cloudflare); samples: 2387407399,2387407399,2387410343; NS: ns1.example.com`)
    - Correctly reads `last_soa_serial` from database to determine previous value for accurate change detection
    - **Important**: The function processes all zones with majority consensus, regardless of whether NS lookup succeeded (NS lookup is for diagnostics only)

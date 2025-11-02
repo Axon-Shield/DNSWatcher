@@ -58,22 +58,22 @@
 
 ### dns-monitor
 - **Purpose**: Smart high-frequency DNS monitoring with per-zone cadence synchronization
-- **Status**: ✅ **FULLY OPERATIONAL** - Per-zone cadence support with 1-second cron tick
+- **Status**: ✅ **FULLY OPERATIONAL** - Per-zone cadence support with 1-second cron tick + deduplication
 - **Functionality**:
-  - Query Google DNS over HTTPS for SOA records
+  - Query Google DNS, Cloudflare DNS, and Quad9 over HTTPS for SOA records (multi-resolver consensus)
   - Handle both `Answer` and `Authority` sections (subdomain support)
-  - Per-run SOA stability sampling (3 quick queries; pick majority serial) to avoid resolver flip-flops
+  - Multi-resolver consensus: Queries 3 DoH providers in parallel, requires majority (2/3) agreement
   - If `Answer` is empty, fall back to `Authority` to read the governing SOA (typical for subdomains inheriting apex SOA)
   - Tracking a subdomain does not create/track the apex as a separate zone; the apex SOA is only read when it governs the subdomain
   - Per-zone cadence: Uses `next_check_at` to honor user-selected cadence (1s/15s/30s/60s)
   - Only processes zones where `next_check_at <= now()` or `next_check_at IS NULL`
   - Updates `last_checked` and recalculates `next_check_at` after each check
-  - Smart change detection with filtering to prevent spam
-  - Serial stability checks and trend analysis
+  - **Change confirmation**: On change detection, waits 200ms and re-queries; change must be confirmed by majority on second check
+  - **Deduplication**: Checks if we've already notified for this exact serial in the last 15 minutes to prevent duplicate notifications when DNS providers auto-increment SOA serials
+  - **Atomic updates**: Updates `last_soa_serial` immediately after change confirmation and before sending notifications to prevent race conditions
   - Record zone checks in database
-  - Send email notifications only for genuine changes
-  - Verified change detection: Serial 2386530407 → 2386530404
-  - Intelligent filtering prevents notification spam
+  - Send email notifications only for genuine, unique changes
+  - Intelligent deduplication prevents notification spam from DNS auto-increments
 
 #### Notifications
 - **Slack/Teams/Webhook**: Now include zone, old/new serial, nameserver/admin, SOA timers, timestamp, and a login link
