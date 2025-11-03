@@ -19,6 +19,12 @@ export async function PATCH(request: NextRequest) {
   const { data: session } = await supabaseServer.auth.getUser();
   const email = session.user?.email;
   if (!email) return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+
+  // Block demo user from changing notification preferences
+  if (email === "demo@axonshield.com") {
+    return NextResponse.json({ message: "Demo account is read-only." }, { status: 403 });
+  }
+
   const body = await request.json().catch(() => ({}));
   const { preferences } = body || {};
   if (!preferences || typeof preferences !== "object") {

@@ -24,6 +24,24 @@ A DNS security monitoring application that tracks SOA record changes and sends i
 
 4. **Open browser**: http://localhost:3000
 
+## 🧪 Quick Demo (No signup)
+
+- Click "Try Demo" on the landing page, or POST to `/api/login` with:
+
+```json
+{ "email": "demo", "password": "demo" }
+```
+
+What you get:
+- Pro-tier demo, read-only
+- 4 preset zones: axonshield.com, google.com, bbc.com, facebook.com
+- 30s refresh cadence
+- Notifications disabled
+
+Limitations:
+- Demo cannot add/remove zones or change any settings
+- A banner in the dashboard links to registration to monitor your own domains
+
 ## 📚 Documentation
 
 - **[Setup Guide](docs/SUPABASE_SETUP.md)** - Complete Supabase integration guide

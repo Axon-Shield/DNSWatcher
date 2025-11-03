@@ -268,14 +268,38 @@ function HomeContent() {
                 </Button>
               </>
             ) : (
-              <Button 
-                variant="outline" 
-                onClick={() => setCurrentView("login")}
-                className="flex items-center space-x-2"
-              >
-                <LogIn className="h-4 w-4" />
-                <span>Sign In</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setCurrentView("login")}
+                  className="flex items-center space-x-2"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span>Sign In</span>
+                </Button>
+                <Button
+                  onClick={async () => {
+                    try {
+                      setIsBootstrapping(true);
+                      const res = await fetch("/api/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email: "demo", password: "demo" })
+                      });
+                      if (!res.ok) throw new Error("Demo login failed");
+                      const data = await res.json();
+                      handleLoginSuccess(data);
+                    } catch {
+                      setCurrentView("login");
+                    } finally {
+                      setIsBootstrapping(false);
+                    }
+                  }}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
+                  Try Demo
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -301,8 +325,28 @@ function HomeContent() {
               }}>
                 Add a DNS Zone
               </Button>
+              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 shadow-sm" onClick={async () => {
+                try {
+                  setIsBootstrapping(true);
+                  const res = await fetch("/api/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: "demo", password: "demo" })
+                  });
+                  if (!res.ok) throw new Error("Demo login failed");
+                  const data = await res.json();
+                  handleLoginSuccess(data);
+                } catch {
+                  setCurrentView("login");
+                } finally {
+                  setIsBootstrapping(false);
+                }
+              }}>
+                Try Demo
+              </Button>
             </div>
             {/* Cadence tagline removed per request */}
+            <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">Try Demo loads a read-only Pro workspace with 4 preset zones and 30s refresh. No email required. <a href="#registration" className="underline">Register</a> to monitor your own domains.</p>
           </div>
         </div>
 

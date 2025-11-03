@@ -51,6 +51,7 @@ interface User {
   subscription_tier: string;
   max_zones: number;
   notification_preferences?: any;
+  is_demo?: boolean;
 }
 
 interface DashboardData {
@@ -401,8 +402,20 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
     }
   };
 
+  const isDemo = (data?.user?.is_demo === true) || (data?.user?.email === "demo@axonshield.com");
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      {isDemo && (
+        <div className="rounded-md bg-indigo-50 border border-indigo-200 text-indigo-900 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm">
+              You are viewing the demo workspace (read-only). Zones refresh every 30s.
+              <Link href="/#registration" className="underline ml-1">Register your own domains</Link> to start monitoring.
+            </p>
+          </div>
+        </div>
+      )}
       {/* Success Message */}
       {removedZoneName && (
         <Alert className="border-green-200 bg-green-50">

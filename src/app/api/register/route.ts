@@ -88,6 +88,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Block demo user from adding zones (read-only)
+    if (email === "demo@axonshield.com") {
+      return NextResponse.json({ message: "Demo account cannot add zones." }, { status: 403 });
+    }
+
     // Check current active zone count
     const { count: activeZoneCount } = await supabase
       .from("dns_zones")

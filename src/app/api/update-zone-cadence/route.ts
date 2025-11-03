@@ -29,6 +29,11 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    // Demo account is read-only
+    if (email === "demo@axonshield.com") {
+      return NextResponse.json({ success: false, message: "Demo account is read-only." }, { status: 403 });
+    }
+
     // Verify ownership and get target zones (single or all) — we update all zones to reflect account-level cadence
     let q = supabase.from("dns_zones").select("id").eq("user_id", user.id);
     if (zoneId) q = q.eq("id", zoneId);

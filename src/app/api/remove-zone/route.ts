@@ -14,6 +14,16 @@ export async function DELETE(request: NextRequest) {
 
     const supabase = createServiceClient();
 
+    // Demo account is read-only — resolve email and block if demo
+    const { data: demoCheck } = await supabase
+      .from("users")
+      .select("email")
+      .eq("id", userId)
+      .single();
+    if (demoCheck?.email === "demo@axonshield.com") {
+      return NextResponse.json({ success: false, message: "Demo account cannot remove zones." }, { status: 403 });
+    }
+
     // Verify the zone belongs to this user
     const { data: zone, error: zoneError } = await supabase
       .from("dns_zones")

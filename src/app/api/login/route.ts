@@ -11,6 +11,126 @@ const loginSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+
+    // Special-case: demo login using username `demo` and password `demo`
+    if (body?.email === "demo" && body?.password === "demo") {
+      const DEMO_EMAIL = "demo@axonshield.com";
+      const DEMO_PASSWORD = "demo";
+
+      const supabase = createServiceClient();
+      const supabaseServer = await createSupabaseServerClient();
+
+      // Ensure demo auth user exists and is confirmed
+      try {
+        // Attempt to sign in first (fast path)
+        await supabaseServer.auth.signInWithPassword({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
+      } catch {
+        // If sign-in fails, try to create via admin API
+        try {
+          // @ts-ignore auth.admin available with service role
+          await supabase.auth.admin.createUser({
+            email: DEMO_EMAIL,
+            password: DEMO_PASSWORD,
+            email_confirm: true,
+          });
+        } catch {}
+      }
+
+      // Upsert public user with demo constraints
+      const { data: demoUserRow } = await supabase
+        .from("users")
+        .upsert(
+          {
+            email: DEMO_EMAIL,
+            email_confirmed: true,
+            password_set: true,
+            subscription_tier: "pro",
+            max_zones: 4,
+            monitor_cadence_seconds: 30,
+            is_demo: true,
+            notification_preferences: { email_enabled: false, frequency: "immediate" },
+          },
+          { onConflict: "email" }
+        )
+        .select("id, email")
+        .single();
+
+      if (!demoUserRow) {
+        return NextResponse.json({ success: false, message: "Failed to initialize demo user" }, { status: 500 });
+      }
+
+      const zoneNames = ["axonshield.com", "google.com", "bbc.com", "facebook.com"];
+
+      // Fetch existing zones
+      const { data: existingZones } = await supabase
+        .from("dns_zones")
+        .select("zone_name, id")
+        .eq("user_id", demoUserRow.id)
+        .eq("is_active", true);
+
+      const existing = new Set((existingZones || []).map((z: any) => z.zone_name));
+      const now = new Date();
+      const nextCheckAt = new Date(now.getTime() + 30 * 1000).toISOString();
+
+      // Insert any missing zones with 30s cadence
+      const zonesToInsert = zoneNames
+        .filter((name) => !existing.has(name))
+        .map((name) => ({
+          user_id: demoUserRow.id,
+          zone_name: name,
+          is_active: true,
+          check_cadence_seconds: 30,
+          next_check_at: nextCheckAt,
+        }));
+
+      if (zonesToInsert.length) {
+        await supabase.from("dns_zones").insert(zonesToInsert);
+      }
+
+      // Sign in the demo user to set cookies
+      const { data: authData, error: authError } = await supabaseServer.auth.signInWithPassword({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+      });
+      if (authError || !authData?.user) {
+        return NextResponse.json({ success: false, message: "Demo sign-in failed" }, { status: 500 });
+      }
+
+      // Load dashboard data similar to normal flow
+      const { data: allZones } = await supabase
+        .from("dns_zones")
+        .select("*")
+        .eq("user_id", demoUserRow.id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      const currentZone = allZones && allZones.length > 0 ? allZones[0] : null;
+
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: demoUserRow.id,
+          email: DEMO_EMAIL,
+          subscription_tier: "pro",
+          max_zones: 4,
+          notification_preferences: { email_enabled: false, frequency: "immediate" },
+          is_demo: true,
+        },
+        currentZone: currentZone
+          ? {
+              id: currentZone.id,
+              zone_name: currentZone.zone_name,
+              created_at: currentZone.created_at,
+              last_checked: currentZone.last_checked,
+              check_cadence_seconds: 30,
+            }
+          : null,
+        zoneHistory: [],
+        allZones: allZones || [],
+      });
+    }
+
+    // Normal login flow
     const { email, password } = loginSchema.parse(body);
 
     const supabase = createServiceClient();
