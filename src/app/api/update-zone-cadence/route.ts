@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
+import { isSubscriptionActive } from "@/lib/subscription-utils";
 import { z } from "zod";
 
 const updateCadenceSchema = z.object({
@@ -18,7 +19,7 @@ export async function PATCH(request: NextRequest) {
     // Get user to check subscription tier
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select("id, email, subscription_tier")
+      .select("id, email, subscription_tier, subscription_status, subscription_current_period_end")
       .eq("email", email)
       .single();
 
@@ -42,8 +43,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Zone(s) not found or access denied" }, { status: 404 });
     }
 
+    // Check if subscription is actually active
+    const isActive = isSubscriptionActive(
+      user.subscription_status,
+      user.subscription_current_period_end
+    );
+
     // Validate cadence based on tier
-    const isPro = user.subscription_tier === "pro";
+    const isPro = user.subscription_tier === "pro" && isActive;
     const allowedCadences = isPro 
       ? [1, 15, 30, 60] 
       : [60];
@@ -106,4 +113,3 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
-

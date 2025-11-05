@@ -475,16 +475,36 @@ function HomeContent() {
             <div className="rounded-xl border-2 border-blue-500/60 bg-white dark:bg-gray-800 p-6 shadow-[0_10px_40px_-15px_rgba(30,64,175,0.35)]">
               <div className="flex items-baseline justify-between mb-2">
                 <span className="text-xl font-semibold">Pro</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Coming soon</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300">Available now</span>
               </div>
-              <div className="text-3xl font-extrabold mb-4">TBA</div>
+              <div className="text-3xl font-extrabold mb-4">$29<span className="text-lg text-gray-500">/mo</span></div>
               <ul className="space-y-2 text-gray-700 dark:text-gray-300 mb-4 list-disc pl-5">
                 <li>Monitoring cadence: 60s / 30s / 15s / 1s</li>
-                <li>Priority alerting and higher limits</li>
-                <li>Advanced analytics and exports</li>
-                <li>SLA-backed uptime</li>
+                <li>Unlimited DNS zones</li>
+                <li>Priority alerting and advanced analytics</li>
+                <li>Real-time change detection</li>
               </ul>
-              <Button variant="outline" className="w-full" onClick={() => setCurrentView("login")}>Join waitlist</Button>
+              {userEmail ? (
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700" 
+                  onClick={async () => {
+                    window.location.href = "/upgrade";
+                  }}
+                >
+                  Upgrade to Pro
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={() => {
+                    const el = document.getElementById("registration");
+                    el?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                >
+                  Sign Up to Upgrade
+                </Button>
+              )}
             </div>
           </div>
         </section>

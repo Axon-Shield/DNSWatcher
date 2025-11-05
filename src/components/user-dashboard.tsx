@@ -402,7 +402,8 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
     }
   };
 
-  const isDemo = (data?.user?.is_demo === true) || (data?.user?.email === "demo@axonshield.com");
+  // Demo workspace detection (read-only)
+  const isDemo = data?.user?.email === "demo@axonshield.com";
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -437,6 +438,9 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
             {isPro ? <Crown className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
             <span>{isPro ? 'Pro' : 'Free'}</span>
           </Badge>
+          {isDemo && (
+            <Badge variant="secondary">Demo · Read-only</Badge>
+          )}
           <Button variant="outline" onClick={signOut}>
             Sign out
           </Button>
@@ -444,7 +448,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
       </div>
 
       {/* Subscription Info */}
-      {!isPro && (
+      {!isPro && !isDemo && (
         <Alert>
           <Crown className="h-4 w-4" />
           <AlertDescription>

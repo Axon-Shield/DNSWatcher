@@ -88,6 +88,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ensure we have subscription fields for the check
+    const { data: userWithSubscription } = await supabase
+      .from("users")
+      .select("subscription_tier, subscription_status, subscription_current_period_end, max_zones")
+      .eq("id", userId)
+      .single();
+    
+    const userForCheck = userWithSubscription || user;
+
     // Block demo user from adding zones (read-only)
     if (email === "demo@axonshield.com") {
       return NextResponse.json({ message: "Demo account cannot add zones." }, { status: 403 });
@@ -101,10 +110,17 @@ export async function POST(request: NextRequest) {
       .eq("is_active", true);
 
     // Check if user has reached their zone limit (only for free tier)
-    if (user.subscription_tier === "free" && activeZoneCount && activeZoneCount >= (user.max_zones || 2)) {
+    // First check if subscription is actually active
+    const isActive = userForCheck.subscription_status && 
+      (userForCheck.subscription_status === 'active' || userForCheck.subscription_status === 'trialing') &&
+      (!userForCheck.subscription_current_period_end || new Date(userForCheck.subscription_current_period_end) > new Date());
+    
+    const effectiveTier = (userForCheck.subscription_tier === 'pro' && isActive) ? 'pro' : 'free';
+    
+    if (effectiveTier === "free" && activeZoneCount && activeZoneCount >= (userForCheck.max_zones || 2)) {
       return NextResponse.json(
-        { 
-          message: `You've reached your free tier limit of ${user.max_zones || 2} DNS zones. Upgrade to Pro for unlimited zones.`,
+          { 
+            message: `You've reached your free tier limit of ${userForCheck.max_zones || 2} DNS zones. Upgrade to Pro for unlimited zones.`,
           upgradeRequired: true
         },
         { status: 403 }
@@ -128,7 +144,7 @@ export async function POST(request: NextRequest) {
 
     // Determine default cadence based on subscription tier
     // Free: 60 seconds (1 minute), Pro: 30 seconds
-    const defaultCadence = user.subscription_tier === "pro" ? 30 : 60;
+    const defaultCadence = effectiveTier === "pro" ? 30 : 60;
     const now = new Date();
     const nextCheckAt = new Date(now.getTime() + defaultCadence * 1000).toISOString();
     

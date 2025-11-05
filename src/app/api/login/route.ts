@@ -36,27 +36,46 @@ export async function POST(request: NextRequest) {
         } catch {}
       }
 
-      // Upsert public user with demo constraints
-      const { data: demoUserRow } = await supabase
+      // Ensure public user exists with demo constraints (avoid onConflict 400s by checking first)
+      let demoUserRow = (await supabase
         .from("users")
-        .upsert(
-          {
+        .select("id, email")
+        .eq("email", DEMO_EMAIL)
+        .single()).data as { id: string; email: string } | null;
+
+      if (!demoUserRow) {
+        const insertRes = await supabase
+          .from("users")
+          .insert({
             email: DEMO_EMAIL,
             email_confirmed: true,
             password_set: true,
             subscription_tier: "pro",
             max_zones: 4,
             monitor_cadence_seconds: 30,
-            is_demo: true,
             notification_preferences: { email_enabled: false, frequency: "immediate" },
-          },
-          { onConflict: "email" }
-        )
-        .select("id, email")
-        .single();
+          })
+          .select("id, email")
+          .single();
 
-      if (!demoUserRow) {
-        return NextResponse.json({ success: false, message: "Failed to initialize demo user" }, { status: 500 });
+        if (insertRes.error) {
+          console.error("Demo user insert error:", insertRes.error);
+          return NextResponse.json({ success: false, message: "Failed to initialize demo user" }, { status: 500 });
+        }
+        demoUserRow = insertRes.data as any;
+      } else {
+        // Update core demo fields to keep constraints intact
+        await supabase
+          .from("users")
+          .update({
+            email_confirmed: true,
+            password_set: true,
+            subscription_tier: "pro",
+            max_zones: 4,
+            monitor_cadence_seconds: 30,
+            notification_preferences: { email_enabled: false, frequency: "immediate" },
+          })
+          .eq("id", demoUserRow.id);
       }
 
       const zoneNames = ["axonshield.com", "google.com", "bbc.com", "facebook.com"];
@@ -115,7 +134,6 @@ export async function POST(request: NextRequest) {
           subscription_tier: "pro",
           max_zones: 4,
           notification_preferences: { email_enabled: false, frequency: "immediate" },
-          is_demo: true,
         },
         currentZone: currentZone
           ? {

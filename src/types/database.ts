@@ -9,6 +9,13 @@ export interface User {
     email_enabled: boolean;
     frequency: 'immediate' | 'daily' | 'weekly';
   };
+  subscription_tier?: 'free' | 'pro';
+  subscription_status?: 'free' | 'active' | 'canceled' | 'past_due' | 'unpaid' | 'trialing';
+  subscription_current_period_end?: string | null;
+  subscription_current_period_start?: string | null;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  max_zones?: number | null;
 }
 
 export interface DNSZone {

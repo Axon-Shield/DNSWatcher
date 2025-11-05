@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseServerClient } from "@/lib/supabase-server";
 import { createServiceClient } from "@/lib/supabase-service";
+import { isSubscriptionActive } from "@/lib/subscription-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,10 +18,10 @@ export async function GET(request: NextRequest) {
 
     const email = sessionData.user.email;
 
-    // Get user data from our users table
+    // Get user data from our users table including subscription fields
     const { data: users, error: userError } = await supabase
       .from("users")
-      .select("id, email, subscription_tier, max_zones, notification_preferences")
+      .select("id, email, subscription_tier, subscription_status, subscription_current_period_end, max_zones, notification_preferences")
       .eq("email", email)
       .eq("email_confirmed", true)
       .eq("password_set", true);
@@ -33,6 +34,37 @@ export async function GET(request: NextRequest) {
     }
 
     const user = users[0];
+
+    // Check if subscription is actually active
+    const isActive = isSubscriptionActive(
+      user.subscription_status,
+      user.subscription_current_period_end
+    );
+
+    // If subscription expired, update tier to free
+    let effectiveTier = user.subscription_tier;
+    let effectiveMaxZones = user.max_zones;
+
+    if (user.subscription_tier === 'pro' && !isActive) {
+      effectiveTier = 'free';
+      effectiveMaxZones = 2;
+      
+      // Update database if needed (async, don't wait)
+      supabase
+        .from("users")
+        .update({
+          subscription_tier: 'free',
+          subscription_status: 'free',
+          max_zones: 2
+        })
+        .eq("id", user.id)
+        .then(() => {
+          console.log(`Updated expired subscription for user ${user.id}`);
+        });
+    } else if (isActive) {
+      effectiveTier = 'pro';
+      effectiveMaxZones = null; // Unlimited
+    }
 
     const { data: allZones, error: allZonesError } = await supabase
       .from("dns_zones")
@@ -52,8 +84,8 @@ export async function GET(request: NextRequest) {
         user: {
           id: user.id,
           email: user.email,
-          subscription_tier: user.subscription_tier,
-          max_zones: user.max_zones,
+          subscription_tier: effectiveTier,
+          max_zones: effectiveMaxZones,
           notification_preferences: user.notification_preferences || null,
         },
         currentZone: null,
@@ -81,8 +113,8 @@ export async function GET(request: NextRequest) {
       user: {
         id: user.id,
         email: user.email,
-        subscription_tier: user.subscription_tier,
-        max_zones: user.max_zones,
+        subscription_tier: effectiveTier,
+        max_zones: effectiveMaxZones,
         notification_preferences: user.notification_preferences || null,
       },
       currentZone: {
