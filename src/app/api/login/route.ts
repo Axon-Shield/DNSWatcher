@@ -106,7 +106,8 @@ export async function POST(request: NextRequest) {
 
       const currentZone = allZones && allZones.length > 0 ? allZones[0] : null;
 
-      return NextResponse.json({
+      // Issue an app-level session expiry cookie for 30 minutes to cap session duration
+      const response = NextResponse.json({
         success: true,
         user: {
           id: demoUserRow.id,
@@ -128,6 +129,17 @@ export async function POST(request: NextRequest) {
         zoneHistory: [],
         allZones: allZones || [],
       });
+
+      const expires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+      response.cookies.set("app_session_expires_at", String(expires.getTime()), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: true,
+        expires,
+        path: "/",
+      });
+
+      return response;
     }
 
     // Normal login flow

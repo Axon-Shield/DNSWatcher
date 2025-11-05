@@ -68,32 +68,62 @@ function HomeContent() {
           .find((row) => row.startsWith("app_session_expires_at="))
           ?.split("=")[1];
 
-        if (expiryCookie && Number(expiryCookie) < Date.now()) {
-          await supabase.auth.signOut();
+        const { data } = await supabase.auth.getUser();
+        
+        // If no Supabase session, clear state
+        if (!data.user?.email) {
           setUserEmail(null);
+          if (currentView === "dashboard") {
+            setCurrentView("home");
+            setDashboardData(null);
+          }
           return;
         }
 
-        const { data } = await supabase.auth.getUser();
-        if (data.user?.email) {
-          setUserEmail(data.user.email);
-          // If authenticated and still on home, load dashboard automatically
-          if (currentView === "home") {
-            try {
-              setIsBootstrapping(true);
-              const res = await fetch("/api/dashboard", { method: "GET" });
-              if (res.ok) {
-                const dash = await res.json();
-                handleLoginSuccess(dash);
-              }
-            } catch {}
-            finally { setIsBootstrapping(false); }
+        // Check session expiry cookie - if expired, sign out
+        if (expiryCookie) {
+          const expiryTime = Number(expiryCookie);
+          if (expiryTime < Date.now()) {
+            await supabase.auth.signOut();
+            setUserEmail(null);
+            if (currentView === "dashboard") {
+              setCurrentView("home");
+              setDashboardData(null);
+            }
+            return;
           }
         } else {
+          // If no expiry cookie but we have a session, set one or sign out
+          // This handles cases where session exists but cookie was cleared
+          await supabase.auth.signOut();
           setUserEmail(null);
+          if (currentView === "dashboard") {
+            setCurrentView("home");
+            setDashboardData(null);
+          }
+          return;
+        }
+
+        // Session is valid
+        setUserEmail(data.user.email);
+        // If authenticated and still on home, load dashboard automatically
+        if (currentView === "home") {
+          try {
+            setIsBootstrapping(true);
+            const res = await fetch("/api/dashboard", { method: "GET" });
+            if (res.ok) {
+              const dash = await res.json();
+              handleLoginSuccess(dash);
+            }
+          } catch {}
+          finally { setIsBootstrapping(false); }
         }
       } catch {
         setUserEmail(null);
+        if (currentView === "dashboard") {
+          setCurrentView("home");
+          setDashboardData(null);
+        }
       }
     };
 
@@ -286,11 +316,19 @@ function HomeContent() {
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ email: "demo", password: "demo" })
                       });
-                      if (!res.ok) throw new Error("Demo login failed");
+                      if (!res.ok) {
+                        const errorData = await res.json().catch(() => ({ message: "Demo login failed" }));
+                        throw new Error(errorData.message || "Demo login failed");
+                      }
                       const data = await res.json();
-                      handleLoginSuccess(data);
-                    } catch {
-                      setCurrentView("login");
+                      if (data.success) {
+                        handleLoginSuccess(data);
+                      } else {
+                        throw new Error(data.message || "Demo login failed");
+                      }
+                    } catch (err) {
+                      console.error("Demo login error:", err);
+                      alert(err instanceof Error ? err.message : "Failed to load demo. Please try again.");
                     } finally {
                       setIsBootstrapping(false);
                     }
@@ -333,11 +371,19 @@ function HomeContent() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email: "demo", password: "demo" })
                   });
-                  if (!res.ok) throw new Error("Demo login failed");
+                  if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({ message: "Demo login failed" }));
+                    throw new Error(errorData.message || "Demo login failed");
+                  }
                   const data = await res.json();
-                  handleLoginSuccess(data);
-                } catch {
-                  setCurrentView("login");
+                  if (data.success) {
+                    handleLoginSuccess(data);
+                  } else {
+                    throw new Error(data.message || "Demo login failed");
+                  }
+                } catch (err) {
+                  console.error("Demo login error:", err);
+                  alert(err instanceof Error ? err.message : "Failed to load demo. Please try again.");
                 } finally {
                   setIsBootstrapping(false);
                 }

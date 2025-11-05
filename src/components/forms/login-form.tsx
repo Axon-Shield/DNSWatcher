@@ -11,7 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, AlertCircle, Eye, EyeOff, Lock } from "lucide-react";
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().refine((val) => val === "demo" || z.string().email().safeParse(val).success, {
+    message: "Please enter a valid email address or 'demo' for demo account",
+  }),
   password: z.string().min(1, "Please enter your password"),
 });
 
