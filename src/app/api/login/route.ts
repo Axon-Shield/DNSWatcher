@@ -80,6 +80,11 @@ export async function POST(request: NextRequest) {
 
       const zoneNames = ["axonshield.com", "google.com", "bbc.com", "facebook.com"];
 
+      // Safety: ensure demoUserRow exists after insert/update
+      if (!demoUserRow) {
+        return NextResponse.json({ success: false, message: "Failed to initialize demo user" }, { status: 500 });
+      }
+
       // Fetch existing zones
       const { data: existingZones } = await supabase
         .from("dns_zones")
