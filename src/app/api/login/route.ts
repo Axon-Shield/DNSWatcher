@@ -33,7 +33,9 @@ export async function POST(request: NextRequest) {
             password: DEMO_PASSWORD,
             email_confirm: true,
           });
-        } catch {}
+        } catch (e: any) {
+          console.error('[demo-login] auth.admin.createUser failed', { error: e?.message || e });
+        }
       }
 
       // Ensure public user exists with demo constraints (avoid onConflict 400s by checking first)
@@ -82,7 +84,8 @@ export async function POST(request: NextRequest) {
 
       // Safety: ensure demoUserRow exists after insert/update
       if (!demoUserRow) {
-        return NextResponse.json({ success: false, message: "Failed to initialize demo user" }, { status: 500 });
+        console.error('[demo-login] demoUserRow is null after insert/update');
+        return NextResponse.json({ success: false, message: "Failed to initialize demo user", code: 'DEMO_USER_ROW_NULL' }, { status: 500 });
       }
 
       // Fetch existing zones
@@ -108,7 +111,10 @@ export async function POST(request: NextRequest) {
         }));
 
       if (zonesToInsert.length) {
-        await supabase.from("dns_zones").insert(zonesToInsert);
+        const insertZonesRes = await supabase.from("dns_zones").insert(zonesToInsert);
+        if (insertZonesRes.error) {
+          console.error('[demo-login] inserting demo zones failed', { error: insertZonesRes.error.message });
+        }
       }
 
       // Sign in the demo user to set cookies
@@ -117,7 +123,8 @@ export async function POST(request: NextRequest) {
         password: DEMO_PASSWORD,
       });
       if (authError || !authData?.user) {
-        return NextResponse.json({ success: false, message: "Demo sign-in failed" }, { status: 500 });
+        console.error('[demo-login] signInWithPassword failed', { error: authError?.message });
+        return NextResponse.json({ success: false, message: "Demo sign-in failed", code: 'DEMO_SIGNIN_FAILED' }, { status: 500 });
       }
 
       // Load dashboard data similar to normal flow

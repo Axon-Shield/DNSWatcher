@@ -4,7 +4,7 @@ export function createServiceClient() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   
   if (!serviceRoleKey || serviceRoleKey === 'your_service_role_key_here') {
-    console.warn('SUPABASE_SERVICE_ROLE_KEY not configured. Using anon key (RLS policies will be enforced).');
+    console.warn('[supabase-service] SUPABASE_SERVICE_ROLE_KEY not configured. Using anon key (RLS enforced).');
     // Fall back to anon key - this will respect RLS policies
     return createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL!,
@@ -13,6 +13,7 @@ export function createServiceClient() {
   }
   
   // Use service role key - this bypasses RLS policies
+  console.info('[supabase-service] Using service role key for server-side operations');
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL!,
     serviceRoleKey,
