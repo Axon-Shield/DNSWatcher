@@ -470,15 +470,15 @@ function HomeContent() {
           </div>
           <div className="bg-white/80 dark:bg-gray-900/50 border border-gray-200/70 dark:border-gray-800/70 p-6 rounded-2xl shadow-lg shadow-indigo-600/5">
             <Network className="h-10 w-10 text-indigo-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Change-Ready Hardening</h3>
+            <h3 className="text-xl font-semibold mb-2">Incident Validation & Audit</h3>
             <p className="text-gray-700 dark:text-gray-300">
-              Auto-enforces least-privilege flows—OTP email verification, Supabase session caps, and per-zone cadence
-              limits—so attackers can’t sneak long-lived sessions or blast ultra-fast checks on free tiers.
+              Every confirmed change is stored with serial, resolver votes, and zone metadata so responders can confirm
+              whether it was an expected deploy or an unauthorized hijack.
             </p>
             <ul className="mt-4 text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc pl-5">
-              <li>OTP gating before zones activate</li>
-              <li>30-minute app-session expirations</li>
-              <li>Per-tier cadence guardrails (free max 60s)</li>
+              <li>Supabase history with timestamps & resolver sources</li>
+              <li>Compare latest vs previous SOA serials instantly</li>
+              <li>Export-ready context for rollback or IR tickets</li>
             </ul>
           </div>
         </div>
