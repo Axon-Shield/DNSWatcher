@@ -343,53 +343,100 @@ function HomeContent() {
 
       {/* Hero Section */}
       <main className="container mx-auto px-4 py-12">
-        <div className="relative overflow-hidden rounded-2xl border border-blue-200/50 dark:border-blue-900/30 bg-white/60 dark:bg-gray-900/50 backdrop-blur-sm p-10 mb-16 shadow-[0_10px_40px_-15px_rgba(30,64,175,0.35)]">
-          <div className="absolute -top-24 -right-24 h-64 w-64 bg-gradient-to-br from-blue-500/20 to-indigo-500/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 h-40 w-40 bg-gradient-to-br from-indigo-500/20 to-blue-500/10 rounded-full blur-2xl" />
-          <div className="relative text-center">
-            <h2 className="text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">
-              Know the moment your DNS is compromised
-            </h2>
-            <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto mb-8">
-              DNS is a prime target for attackers. DNSWatcher monitors your authoritative zones every 30 seconds,
-              detects unauthorized changes, and alerts your team before users are hijacked or services go dark.
-            </p>
-            <div className="flex justify-center gap-3">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 shadow-sm" onClick={() => {
-                const el = document.getElementById("registration");
-                el?.scrollIntoView({ behavior: "smooth" });
-              }}>
-                Add a DNS Zone
-              </Button>
-              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 shadow-sm" onClick={async () => {
-                try {
-                  setIsBootstrapping(true);
-                  const res = await fetch("/api/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email: "demo", password: "demo" })
-                  });
-                  if (!res.ok) {
-                    const errorData = await res.json().catch(() => ({ message: "Demo login failed" }));
-                    throw new Error(errorData.message || "Demo login failed");
+        <div className="relative overflow-hidden rounded-3xl border border-blue-200/50 dark:border-blue-900/40 bg-white/70 dark:bg-gray-950/60 backdrop-blur-lg px-10 py-14 mb-16 shadow-[0_20px_90px_-30px_rgba(30,64,175,0.65)]">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -top-24 -right-24 h-72 w-72 bg-gradient-to-br from-blue-500/30 via-indigo-500/20 to-purple-500/10 rounded-full blur-[120px]" />
+            <div className="absolute -bottom-16 -left-16 h-56 w-56 bg-gradient-to-br from-indigo-500/20 to-blue-500/10 rounded-full blur-3xl" />
+          </div>
+          <div className="relative grid md:grid-cols-[1.1fr_0.9fr] gap-10 items-center">
+            <div>
+              <span className="inline-flex items-center text-xs font-semibold tracking-wide uppercase text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-full px-3 py-1 mb-5">
+                Incident Radar for Authoritative Zones
+              </span>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white mb-6 leading-tight">
+                Catch unauthorized DNS edits before they hijack your users.
+              </h2>
+              <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 mb-8">
+                DNSWatcher polls your authoritative SOA serials every 30 seconds, double-confirms changes across
+                resolvers, and fires alerts into Slack, Teams, email, or webhooks so SecOps can roll back bad pushes
+                before customers feel it.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/30" onClick={() => {
+                  const el = document.getElementById("registration");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}>
+                  Start Monitoring My Zones
+                </Button>
+                <Button size="lg" variant="outline" className="border-blue-200 bg-white/70 dark:bg-transparent" onClick={async () => {
+                  try {
+                    setIsBootstrapping(true);
+                    const res = await fetch("/api/login", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ email: "demo", password: "demo" })
+                    });
+                    if (!res.ok) {
+                      const errorData = await res.json().catch(() => ({ message: "Demo login failed" }));
+                      throw new Error(errorData.message || "Demo login failed");
+                    }
+                    const data = await res.json();
+                    if (data.success) {
+                      handleLoginSuccess(data);
+                    } else {
+                      throw new Error(data.message || "Demo login failed");
+                    }
+                  } catch (err) {
+                    alert(err instanceof Error ? err.message : "Failed to load demo. Please try again.");
+                  } finally {
+                    setIsBootstrapping(false);
                   }
-                  const data = await res.json();
-                  if (data.success) {
-                    handleLoginSuccess(data);
-                  } else {
-                    throw new Error(data.message || "Demo login failed");
-                  }
-                } catch (err) {
-                  alert(err instanceof Error ? err.message : "Failed to load demo. Please try again.");
-                } finally {
-                  setIsBootstrapping(false);
-                }
-              }}>
-                Try Demo
-              </Button>
+                }}>
+                  Explore Live Demo Tenant
+                </Button>
+              </div>
+              <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                30-second cadence with jitter + second confirmation run. Includes read-only demo workspace
+                seeded with real zones so stakeholders can kick the tires safely.{" "}
+                <a className="underline" href="#registration">Register</a> to monitor your own domains.
+              </p>
             </div>
-            {/* Cadence tagline removed per request */}
-            <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">Try Demo loads a read-only Pro workspace with 4 preset zones and 30s refresh. No email required. <a href="#registration" className="underline">Register</a> to monitor your own domains.</p>
+            <div className="bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl">
+              <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+                DNSWatcher vs “big iron”
+              </p>
+              <div className="space-y-5">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">DomainTools Monitors</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    WHOIS-scale dataset with registrant/IP/name-server alerts—powerful, but heavy for teams that just need serial-level guardrails.[^dt]
+                  </p>
+                </div>
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Cisco ThousandEyes</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Deep observability across routing & apps. Great for infra troubleshooting, less targeted for rapid SOA-change containment.[^te]
+                  </p>
+                </div>
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
+                  <p className="text-xs font-semibold text-blue-600 dark:text-blue-300 uppercase mb-1">DNSWatcher</p>
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    Purpose-built SOA tripwire with multi-resolver confirmation, built-in Slack/Teams/email/webhook actions,
+                    Supabase-backed history, and a safe demo tenant.
+                  </p>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-4">
+                  Sources:{" "}
+                  <a className="underline" href="https://www.domaintools.com/products/monitors/" target="_blank" rel="noreferrer">
+                    DomainTools Monitors
+                  </a>{" "}
+                  •{" "}
+                  <a className="underline" href="https://www.thousandeyes.com/solutions/dns-monitoring" target="_blank" rel="noreferrer">
+                    Cisco ThousandEyes DNS Monitoring
+                  </a>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
