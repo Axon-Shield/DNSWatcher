@@ -137,9 +137,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         const data = await res.json();
         return data.zoneHistory || [];
       }
-    } catch (e) {
-      console.error(`Error fetching history for zone ${zoneId}:`, e);
-    }
+    } catch (e) {}
     return [];
   };
 
@@ -168,7 +166,7 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
         }
       }
     } catch (e) {
-      console.error('Error refreshing zones:', e);
+      // Swallow refresh errors; UI will remain on last known data.
     } finally {
       setIsRefreshing(false);
     }
@@ -291,7 +289,6 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
 
       if (onZoneRemoved) onZoneRemoved(zoneId);
     } catch (error) {
-      console.error("Error removing zone:", error);
       alert(error instanceof Error ? error.message : "Failed to remove zone");
     } finally {
       setRemovingZone(null);
@@ -335,7 +332,6 @@ export default function UserDashboard({ data, onZoneRemoved, onBack }: UserDashb
 
       setCurrentCadence(newCadence);
     } catch (error) {
-      console.error("Error updating cadence:", error);
       alert(error instanceof Error ? error.message : "Failed to update cadence");
     } finally {
       setUpdatingCadence(false);

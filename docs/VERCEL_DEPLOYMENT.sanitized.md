@@ -58,7 +58,7 @@ vercel env add NEXT_PUBLIC_SITE_URL
 
 ## Deployment Checklist
 
-- [ ] Set all 5 environment variables in Vercel
+- [ ] Set all required environment variables in Vercel
 - [ ] Verify Resend API key is valid and active
 - [ ] Update `NEXT_PUBLIC_SITE_URL` to your Vercel domain
 - [ ] Ensure Resend domain is configured for `axonshield.com`

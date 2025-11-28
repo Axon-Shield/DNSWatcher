@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
 import { z } from "zod";
+import { logError } from "@/lib/logger";
 
 const autoLoginSchema = z.object({
   email: z.string().email(),
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
       .order("created_at", { ascending: false });
 
     if (zonesError) {
-      console.error("Error fetching zones:", zonesError);
+      logError("autoLogin.fetchZones", zonesError);
       return NextResponse.json(
         { message: "Failed to fetch user zones" },
         { status: 500 }
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
       .limit(50);
 
     if (historyError) {
-      console.error("Error fetching zone history:", historyError);
+      logError("autoLogin.fetchZoneHistory", historyError);
     }
 
     return NextResponse.json({
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Auto-login after verification error:", error);
+    logError("autoLogin.handler", error);
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

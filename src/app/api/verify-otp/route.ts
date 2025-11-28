@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
 import { createClient as createServerSupabase } from "@/lib/supabase-server";
 import { z } from "zod";
+import { logError } from "@/lib/logger";
 
 const verifyOtpSchema = z.object({
   email: z.string().email(),
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id);
 
     if (updateError) {
-      console.error("Error updating user email status:", updateError);
+      logError("verifyOtp.updateUser", updateError);
       return NextResponse.json(
         { message: "Failed to verify email" },
         { status: 500 }
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
       .eq("is_active", false);
 
     if (activateZonesError) {
-      console.error("Error activating zones:", activateZonesError);
+      logError("verifyOtp.activateZones", activateZonesError);
       return NextResponse.json(
         { message: "Failed to activate DNS zones" },
         { status: 500 }
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Verify OTP error:", error);
+    logError("verifyOtp.handler", error);
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

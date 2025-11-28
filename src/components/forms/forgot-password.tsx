@@ -55,7 +55,6 @@ export default function ForgotPassword({ onBack }: ForgotPasswordProps) {
 
       setIsSuccess(true);
     } catch (error) {
-      console.error("Forgot password error:", error);
       setError(error instanceof Error ? error.message : "Failed to send reset email");
     } finally {
       setIsSubmitting(false);

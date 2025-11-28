@@ -14,7 +14,7 @@ A DNS security monitoring application that tracks SOA record changes and sends i
 2. **Set up environment**:
    ```bash
    cp env.template .env.local
-   # Update .env.local with your Supabase service role key
+   # Update .env.local with your Supabase keys and Stripe credentials
    ```
 
 3. **Start development**:

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseServerClient } from "@/lib/supabase-server";
 import { createServiceClient } from "@/lib/supabase-service";
 import { isSubscriptionActive } from "@/lib/subscription-utils";
+import { logError } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   try {
@@ -58,8 +59,8 @@ export async function GET(request: NextRequest) {
           max_zones: 2
         })
         .eq("id", user.id)
-        .then(() => {
-          console.log(`Updated expired subscription for user ${user.id}`);
+        .catch((err) => {
+          logError("dashboard.downgradeSubscription", err);
         });
     } else if (isActive) {
       effectiveTier = 'pro';
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false });
 
     if (allZonesError) {
-      console.error("Error fetching all zones:", allZonesError);
+      logError("dashboard.fetchZones", allZonesError);
     }
 
     // Allow dashboard to render without zones (empty state)
@@ -105,7 +106,7 @@ export async function GET(request: NextRequest) {
       .limit(50);
 
     if (historyError) {
-      console.error("Error fetching zone history:", historyError);
+      logError("dashboard.fetchZoneHistory", historyError);
     }
 
     return NextResponse.json({
@@ -128,7 +129,7 @@ export async function GET(request: NextRequest) {
       allZones: allZones || [],
     });
   } catch (e) {
-    console.error("Dashboard API error:", e);
+    logError("dashboard.handler", e);
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }

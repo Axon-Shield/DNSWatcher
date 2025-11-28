@@ -107,7 +107,7 @@ smart_soa_change_detection(
   - Pro tier: 30 seconds default
 - **Synchronization**: Edge function uses `next_check_at` to honor per-zone cadence
 - **Implementation**: pg_cron job calls Supabase Edge Function every second
-- **Cron Job**: `SELECT net.http_post(url := 'https://ipdbzqiypnvkgpgnsyva.supabase.co/functions/v1/dns-monitor', ...)`
+- **Cron Job**: `SELECT net.http_post(url := 'https://<your-project-ref>.supabase.co/functions/v1/dns-monitor', ...)`
 - **Authentication**: Uses service role key for Edge Function calls
 - **Reliability**: Supabase Edge Functions with automatic scaling
 - **Email Service**: Resend API integration

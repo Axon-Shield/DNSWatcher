@@ -46,7 +46,6 @@ function HomeContent() {
             setCurrentView("login");
           }
         } catch (error) {
-          console.error("Auto-login failed:", error);
           setCurrentView("login");
         } finally {
           setIsBootstrapping(false);
@@ -327,7 +326,6 @@ function HomeContent() {
                         throw new Error(data.message || "Demo login failed");
                       }
                     } catch (err) {
-                      console.error("Demo login error:", err);
                       alert(err instanceof Error ? err.message : "Failed to load demo. Please try again.");
                     } finally {
                       setIsBootstrapping(false);
@@ -382,7 +380,6 @@ function HomeContent() {
                     throw new Error(data.message || "Demo login failed");
                   }
                 } catch (err) {
-                  console.error("Demo login error:", err);
                   alert(err instanceof Error ? err.message : "Failed to load demo. Please try again.");
                 } finally {
                   setIsBootstrapping(false);

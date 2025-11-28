@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
 import { isSubscriptionActive } from "@/lib/subscription-utils";
 import { z } from "zod";
+import { logError } from "@/lib/logger";
 
 const updateCadenceSchema = z.object({
   email: z.string().email(),
@@ -71,7 +72,7 @@ export async function PATCH(request: NextRequest) {
       .update({ monitor_cadence_seconds: checkCadenceSeconds })
       .eq("id", user.id);
     if (userUpdateError) {
-      console.error("Error updating user cadence:", userUpdateError);
+      logError("updateCadence.userUpdate", userUpdateError);
       return NextResponse.json({ success: false, message: "Failed to update account cadence" }, { status: 500 });
     }
 
@@ -88,7 +89,7 @@ export async function PATCH(request: NextRequest) {
       .in("id", ids);
 
     if (updateError) {
-      console.error("Error updating zone cadence:", updateError);
+      logError("updateCadence.zoneUpdate", updateError);
       return NextResponse.json(
         { success: false, message: "Failed to update zone cadence" },
         { status: 500 }
@@ -98,7 +99,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: true, message: "Cadence updated", checkCadenceSeconds, zoneCount: ids.length });
 
   } catch (error) {
-    console.error("Update cadence error:", error);
+    logError("updateCadence.handler", error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

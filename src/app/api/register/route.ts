@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
 import { createClient as createSupabaseServerClient } from "@/lib/supabase-server";
 import { z } from "zod";
+import { logError } from "@/lib/logger";
 
 interface SOARecordData {
   serial: number;
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (newUserError) {
-        console.error("Error creating user:", newUserError);
+        logError("register.createUser", newUserError);
         return NextResponse.json(
           { message: "Failed to create user" },
           { status: 500 }
@@ -169,7 +170,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (newZoneError) {
-      console.error("Error creating DNS zone:", newZoneError);
+      logError("register.createZone", newZoneError);
       return NextResponse.json(
         { message: "Failed to create DNS zone" },
         { status: 500 }
@@ -202,7 +203,7 @@ export async function POST(request: NextRequest) {
           .eq("id", newZone.id);
       }
     } catch (dnsError) {
-      console.error("Error fetching initial SOA record:", dnsError);
+      logError("register.fetchInitialSoa", dnsError);
       // Continue without initial SOA record - will be fetched on first check
     }
 
@@ -213,7 +214,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Registration error:", error);
+    logError("register.handler", error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

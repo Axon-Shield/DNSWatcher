@@ -28,8 +28,8 @@ function UpgradePageContent() {
           const data = await res.json();
           setIsPro(data.user?.subscription_tier === "pro");
         }
-      } catch (err) {
-        console.error("Error checking subscription:", err);
+    } catch (err) {
+      setError("Unable to load your subscription status. Please try again.");
       } finally {
         setCheckingStatus(false);
       }

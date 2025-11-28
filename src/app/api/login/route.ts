@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
 import { createClient as createSupabaseServerClient } from "@/lib/supabase-server";
 import { z } from "zod";
+import { logError } from "@/lib/logger";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
             email_confirm: true,
           });
         } catch (e: any) {
-          console.error('[demo-login] auth.admin.createUser failed', { error: e?.message || e });
+          logError("login.demo.authAdminCreateUser", e);
         }
       }
 
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (insertRes.error) {
-          console.error("Demo user insert error:", insertRes.error);
+          logError("login.demo.insertUser", insertRes.error);
           return NextResponse.json({ success: false, message: "Failed to initialize demo user" }, { status: 500 });
         }
         demoUserRow = insertRes.data as any;
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
 
       // Safety: ensure demoUserRow exists after insert/update
       if (!demoUserRow) {
-        console.error('[demo-login] demoUserRow is null after insert/update');
+        logError("login.demo.missingUserRow", new Error("demoUserRow is null after insert/update"));
         return NextResponse.json({ success: false, message: "Failed to initialize demo user", code: 'DEMO_USER_ROW_NULL' }, { status: 500 });
       }
 
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
       if (zonesToInsert.length) {
         const insertZonesRes = await supabase.from("dns_zones").insert(zonesToInsert);
         if (insertZonesRes.error) {
-          console.error('[demo-login] inserting demo zones failed', { error: insertZonesRes.error.message });
+          logError("login.demo.insertZones", insertZonesRes.error);
         }
       }
 
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
         password: DEMO_PASSWORD,
       });
       if (authError || !authData?.user) {
-        console.error('[demo-login] signInWithPassword failed', { error: authError?.message });
+        logError("login.demo.signInWithPassword", authError);
         return NextResponse.json({ success: false, message: "Demo sign-in failed", code: 'DEMO_SIGNIN_FAILED' }, { status: 500 });
       }
 
@@ -224,7 +225,7 @@ export async function POST(request: NextRequest) {
       .order("created_at", { ascending: false });
 
     if (allZonesError) {
-      console.error("Error fetching all zones:", allZonesError);
+      logError("login.fetchZones", allZonesError);
     }
 
     // Allow login even when user has no zones yet
@@ -268,7 +269,7 @@ export async function POST(request: NextRequest) {
       .limit(50); // Last 50 checks
 
     if (historyError) {
-      console.error("Error fetching zone history:", historyError);
+      logError("login.fetchZoneHistory", historyError);
     }
 
     // Issue an app-level session expiry cookie for 30 minutes to cap session duration
@@ -304,7 +305,7 @@ export async function POST(request: NextRequest) {
     return response;
 
   } catch (error) {
-    console.error("Login error:", error);
+    logError("login.handler", error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

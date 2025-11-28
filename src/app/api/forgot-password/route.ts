@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
 import { z } from "zod";
+import { logError } from "@/lib/logger";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email(),
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (emailError) {
-      console.error("Error sending password reset email via Supabase:", emailError);
+      logError("forgotPassword.sendEmail", emailError);
       return NextResponse.json(
         { message: "Failed to send password reset email" },
         { status: 500 }
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Forgot password error:", error);
+    logError("forgotPassword.handler", error);
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

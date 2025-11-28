@@ -67,23 +67,18 @@ export default function PasswordSetup({ email, onPasswordSet, onEmailVerificatio
       });
 
       const result = await response.json();
-      console.log("Password setup API response:", result);
 
       if (!response.ok) {
         throw new Error(result.message || "Failed to set password");
       }
 
       // Check if email verification is required
-      console.log("Email verification required:", result.emailVerificationRequired);
       if (result.emailVerificationRequired) {
-        console.log("Redirecting to email verification");
         onEmailVerificationRequired();
       } else {
-        console.log("Password set successfully, calling onPasswordSet");
         onPasswordSet();
       }
     } catch (error) {
-      console.error("Error setting password:", error);
       setError(error instanceof Error ? error.message : "Failed to set password");
     } finally {
       setIsSubmitting(false);

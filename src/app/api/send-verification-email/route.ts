@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
 import { z } from "zod";
+import { logError } from "@/lib/logger";
 
 const sendVerificationSchema = z.object({
   email: z.string().email(),
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id);
 
     if (otpError) {
-      console.error("Error storing OTP:", otpError);
+      logError("sendVerification.storeOtp", otpError);
       return NextResponse.json(
         { message: "Failed to generate verification code" },
         { status: 500 }
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (emailError) {
-      console.error("Error sending verification email via Supabase Edge Function:", emailError);
+      logError("sendVerification.sendEmail", emailError);
       return NextResponse.json(
         { message: "Failed to send verification email" },
         { status: 500 }
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Send verification email error:", error);
+    logError("sendVerification.handler", error);
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

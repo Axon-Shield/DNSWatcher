@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
 import { createClient as createServerSupabase } from "@/lib/supabase-server";
 import { z } from "zod";
+import { logError, logWarn } from "@/lib/logger";
 
 const passwordSetupSchema = z.object({
   email: z.string().email(),
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (authError) {
-      console.error("Error creating Supabase Auth user:", authError);
+      logError("setupPassword.createAuthUser", authError);
       return NextResponse.json(
         { message: "Failed to create account" },
         { status: 500 }
@@ -74,15 +75,15 @@ export async function POST(request: NextRequest) {
         password,
       });
       if (signInError) {
-        console.warn("Sign-in after password setup failed (will still proceed with OTP flow):", signInError.message);
+        logWarn("setupPassword.signInAfterSetup", signInError);
       }
     } catch (e) {
-      console.warn("Unexpected error during immediate sign-in:", e);
+      logWarn("setupPassword.signInUnexpected", e);
     }
 
 
     if (updateError) {
-      console.error("Error updating user password status:", updateError);
+      logError("setupPassword.updateUser", updateError);
       return NextResponse.json(
         { message: "Failed to set password" },
         { status: 500 }
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
         .eq("id", user.id);
 
       if (otpError) {
-        console.error("Error storing OTP after password setup:", otpError);
+        logError("setupPassword.storeOtp", otpError);
       } else {
         // Send OTP via Edge Function
         const { error: emailError } = await supabase.functions.invoke('send-email', {
@@ -128,11 +129,11 @@ export async function POST(request: NextRequest) {
         });
 
         if (emailError) {
-          console.error('Error sending OTP email after password setup:', emailError);
+          logError('setupPassword.sendOtpEmail', emailError);
         }
       }
     } catch (e) {
-      console.error('Unexpected error while auto-sending OTP:', e);
+      logError('setupPassword.autoSendOtp', e);
     }
 
     return NextResponse.json({
@@ -142,7 +143,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Password setup error:", error);
+    logError("setupPassword.handler", error);
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

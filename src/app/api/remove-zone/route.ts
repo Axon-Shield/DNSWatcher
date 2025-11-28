@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-service";
 import { z } from "zod";
+import { logError } from "@/lib/logger";
 
 const removeZoneSchema = z.object({
   userId: z.string().uuid("Invalid user ID"),
@@ -52,7 +53,7 @@ export async function DELETE(request: NextRequest) {
       .eq("id", zoneId);
 
     if (deleteError) {
-      console.error("Error removing zone:", deleteError);
+      logError("removeZone.delete", deleteError);
       return NextResponse.json(
         { 
           success: false, 
@@ -69,7 +70,7 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Remove zone error:", error);
+    logError("removeZone.handler", error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

@@ -68,7 +68,6 @@ export default function RegistrationForm({ onSuccess, onRedirectToLogin }: Regis
       }
 
       const result = await response.json();
-      console.log("Registration successful:", result);
       
       if (result.passwordSetupRequired) {
         setUserEmail(data.email);
@@ -82,7 +81,6 @@ export default function RegistrationForm({ onSuccess, onRedirectToLogin }: Regis
         }
       }
     } catch (err) {
-      console.error("Registration error:", err);
       if (err instanceof TypeError && err.message.includes('fetch')) {
         setError("Network error. Please check your connection and try again.");
       } else {
@@ -97,7 +95,6 @@ export default function RegistrationForm({ onSuccess, onRedirectToLogin }: Regis
   const handlePasswordSet = () => {
     // This should not happen in the normal flow since email verification is required
     // after password setup. This is only a fallback.
-    console.log("handlePasswordSet called - this should not happen in normal flow");
     setIsSuccess(true);
     reset();
     if (onSuccess) {

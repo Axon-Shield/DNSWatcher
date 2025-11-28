@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createServiceClient } from "@/lib/supabase-service";
+import { logError, logWarn } from "@/lib/logger";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-10-29.clover",
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err: any) {
-      console.error("Webhook signature verification failed:", err.message);
+      logError("stripe.webhook.verifySignature", err);
       return NextResponse.json(
         { error: `Webhook Error: ${err.message}` },
         { status: 400 }
@@ -158,13 +159,13 @@ export async function POST(request: NextRequest) {
         break;
       }
 
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+    default:
+        logWarn("stripe.webhook.unhandledEvent", event.type);
     }
 
     return NextResponse.json({ received: true });
   } catch (error: any) {
-    console.error("Webhook handler error:", error);
+    logError("stripe.webhook.handler", error);
     return NextResponse.json(
       { error: error.message || "Webhook handler failed" },
       { status: 500 }

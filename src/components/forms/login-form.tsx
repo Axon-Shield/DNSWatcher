@@ -55,14 +55,11 @@ export default function LoginForm({ onSuccess, onForgotPassword }: LoginFormProp
       if (!response.ok) {
         throw new Error(result.message || "Login failed");
       }
-
-      console.log("Login successful:", result);
       
       if (onSuccess) {
         onSuccess(result);
       }
     } catch (err) {
-      console.error("Login error:", err);
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setIsSubmitting(false);

@@ -1,9 +1,9 @@
 # Supabase Integration Context
 
 ## Supabase Configuration
-- **Project URL**: https://ipdbzqiypnvkgpgnsyva.supabase.co
-- **Anon Key**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwZGJ6cWl5cG52a2dwZ25zeXZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwMDcyMzYsImV4cCI6MjA3NjU4MzIzNn0.DnoH8NEp1CWGj4qQ4ow8x_HiFp7XC_PglS8pQb3ICVU
-- **Service Role Key**: Available in environment variables
+- **Project URL**: https://<your-project-ref>.supabase.co
+- **Anon Key**: Configure via environment variables (`NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+- **Service Role Key**: Configure via environment variables (`SUPABASE_SERVICE_ROLE_KEY`)
 
 ## Database Schema
 ### Tables
@@ -92,11 +92,11 @@
     'dns-monitor-job',
     '* * * * *',  -- Every 1 second (5-field cron syntax)
     $$
-    SELECT net.http_post(
-      url := 'https://ipdbzqiypnvkgpgnsyva.supabase.co/functions/v1/dns-monitor',
-      headers := '{"Content-Type": "application/json", "Authorization": "Bearer [service_role_key]"}'::jsonb,
-      body := '{}'::jsonb
-    );
+  SELECT net.http_post(
+    url := 'https://<your-project-ref>.supabase.co/functions/v1/dns-monitor',
+    headers := '{"Content-Type": "application/json", "Authorization": "Bearer [service_role_key]"}'::jsonb,
+    body := '{}'::jsonb
+  );
     $$
   );
   ```
@@ -128,8 +128,8 @@
 ## Environment Variables
 ### Local Development (`.env.local`)
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://ipdbzqiypnvkgpgnsyva.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
