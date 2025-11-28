@@ -440,28 +440,46 @@ function HomeContent() {
           </div>
         </div>
 
-        {/* Features Grid */}
+        {/* Feature Grid: Incident Radar Pillars */}
         <div className="grid md:grid-cols-3 gap-6 mb-16">
-          <div className="bg-white/70 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/50 p-6 rounded-xl shadow-sm">
-            <Eye className="h-12 w-12 text-blue-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Detect unauthorized zone changes</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Track SOA serials and critical records for unexpected modifications that indicate tampering.
+          <div className="bg-white/80 dark:bg-gray-900/50 border border-gray-200/70 dark:border-gray-800/70 p-6 rounded-2xl shadow-lg shadow-blue-600/5">
+            <Eye className="h-10 w-10 text-blue-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">SOA Tripwire Engine</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              Polls authoritative SOA serials every 30s with jitter, re-runs confirmation against independent resolvers,
+              and only fires when a change is verified—no more chasing DNS cache ghosts.
             </p>
+            <ul className="mt-4 text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc pl-5">
+              <li>Double-check consensus before alerting</li>
+              <li>Cadence tiers per zone (60s → 1s)</li>
+              <li>Supabase-backed audit history</li>
+            </ul>
           </div>
-          <div className="bg-white/70 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/50 p-6 rounded-xl shadow-sm">
-            <Skull className="h-12 w-12 text-rose-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Actionable alerts</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Multi-channel notifications (Email, Slack, Teams, Webhooks) with cooldown and stability checks.
+          <div className="bg-white/80 dark:bg-gray-900/50 border border-gray-200/70 dark:border-gray-800/70 p-6 rounded-2xl shadow-lg shadow-rose-600/5">
+            <AlertTriangle className="h-10 w-10 text-rose-500 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Multi-Channel Response</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              Pipe verified incidents into Slack, Microsoft Teams, email, or custom webhooks with per-user preferences
+              and test hooks so playbooks stay consistent.
             </p>
+            <ul className="mt-4 text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc pl-5">
+              <li>Notification cooldown + suppression</li>
+              <li>Inline Slack/Teams test sends</li>
+              <li>Webhook payloads ready for SOAR</li>
+            </ul>
           </div>
-          <div className="bg-white/70 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/50 p-6 rounded-xl shadow-sm">
-            <Network className="h-12 w-12 text-indigo-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Built for security teams</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              High-frequency checks, stability windows, and noise reduction tuned for real incident response.
+          <div className="bg-white/80 dark:bg-gray-900/50 border border-gray-200/70 dark:border-gray-800/70 p-6 rounded-2xl shadow-lg shadow-indigo-600/5">
+            <Network className="h-10 w-10 text-indigo-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Demo-Safe Onboarding</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              Give stakeholders a safe pro-tier tenant (demo@axonshield.com) while production users onboard through
+              Supabase-authenticated flows with OTP checks and Stripe upgrades.
             </p>
+            <ul className="mt-4 text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc pl-5">
+              <li>Read-only demo with 4 seeded zones</li>
+              <li>Session caps + auto sign-out</li>
+              <li>Stripe-powered Pro upgrades</li>
+            </ul>
           </div>
         </div>
 
