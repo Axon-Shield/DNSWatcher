@@ -56,8 +56,8 @@ export async function POST(request: NextRequest) {
               stripe_subscription_id: subscription.id,
               subscription_status: subscription.status === "active" ? "active" : "trialing",
               subscription_tier: "pro",
-              subscription_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-              subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              subscription_current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+              subscription_current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
               max_zones: null, // Unlimited for pro
             })
             .eq("stripe_customer_id", subscription.customer as string);
@@ -126,8 +126,8 @@ export async function POST(request: NextRequest) {
             .update({
               subscription_status: "active",
               subscription_tier: "pro",
-              subscription_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-              subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              subscription_current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+              subscription_current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
               max_zones: null,
             })
             .eq("stripe_customer_id", invoice.customer as string);
@@ -151,8 +151,8 @@ export async function POST(request: NextRequest) {
             .from("users")
             .update({
               subscription_status: isWithinPeriod ? "past_due" : "unpaid",
-              subscription_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-              subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              subscription_current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+              subscription_current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
             })
             .eq("stripe_customer_id", invoice.customer as string);
         }
