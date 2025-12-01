@@ -49,19 +49,22 @@ export async function GET(request: NextRequest) {
     if (user.subscription_tier === 'pro' && !isActive) {
       effectiveTier = 'free';
       effectiveMaxZones = 2;
-      
+
       // Update database if needed (async, don't wait)
-      supabase
-        .from("users")
-        .update({
-          subscription_tier: 'free',
-          subscription_status: 'free',
-          max_zones: 2
-        })
-        .eq("id", user.id)
-        .catch((err) => {
+      (async () => {
+        try {
+          await supabase
+            .from("users")
+            .update({
+              subscription_tier: 'free',
+              subscription_status: 'free',
+              max_zones: 2
+            })
+            .eq("id", user.id);
+        } catch (err) {
           logError("dashboard.downgradeSubscription", err);
-        });
+        }
+      })();
     } else if (isActive) {
       effectiveTier = 'pro';
       effectiveMaxZones = null; // Unlimited
