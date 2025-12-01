@@ -45,9 +45,9 @@ export async function POST(request: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
         
         if (session.mode === "subscription" && session.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(
+          const subscription = (await stripe.subscriptions.retrieve(
             session.subscription as string
-          );
+          )) as Stripe.Subscription;
 
           // Update user subscription
           await supabase
@@ -117,9 +117,9 @@ export async function POST(request: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice;
         
         if (invoice.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(
+          const subscription = (await stripe.subscriptions.retrieve(
             invoice.subscription as string
-          );
+          )) as Stripe.Subscription;
 
           await supabase
             .from("users")
@@ -139,9 +139,9 @@ export async function POST(request: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice;
         
         if (invoice.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(
+          const subscription = (await stripe.subscriptions.retrieve(
             invoice.subscription as string
-          );
+          )) as Stripe.Subscription;
 
           // Check if subscription is still within grace period
           const now = Math.floor(Date.now() / 1000);
