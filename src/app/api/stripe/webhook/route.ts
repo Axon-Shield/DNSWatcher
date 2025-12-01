@@ -70,9 +70,9 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         
         // Determine subscription status
-        let status = "free";
-        let tier = "free";
-        let maxZones = 2;
+        let status: "free" | "trialing" | "active" | "canceled" | string = "free";
+        let tier: "free" | "pro" | string = "free";
+        let maxZones: number | null = 2;
 
         if (subscription.status === "active" || subscription.status === "trialing") {
           status = subscription.status === "trialing" ? "trialing" : "active";
