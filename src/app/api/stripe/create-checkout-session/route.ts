@@ -2,14 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient as createSupabaseServerClient } from "@/lib/supabase-server";
 import { createServiceClient } from "@/lib/supabase-service";
-import { logError } from "@/lib/logger";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-10-29.clover",
-});
+import { logError, logWarn } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+
+    if (!secretKey) {
+      logWarn("stripe.checkout.disabled", "Stripe integration not configured; checkout disabled");
+      return NextResponse.json(
+        { error: "Checkout is not available because Stripe is not configured.", stripeEnabled: false },
+        { status: 503 }
+      );
+    }
+
+    const stripe = new Stripe(secretKey, {
+      apiVersion: "2025-10-29.clover",
+    });
+
     // Verify user is authenticated
     const supabaseServer = await createSupabaseServerClient();
     const { data: { user }, error: authError } = await supabaseServer.auth.getUser();

@@ -3,18 +3,25 @@ import Stripe from "stripe";
 import { createServiceClient } from "@/lib/supabase-service";
 import { logError, logWarn } from "@/lib/logger";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-10-29.clover",
-});
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-
 // Disable body parsing for webhook route
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    // If Stripe is not configured, safely no-op so the app can run without Stripe
+    if (!secretKey || !webhookSecret) {
+      logWarn("stripe.webhook.disabled", "Stripe integration not configured; ignoring webhook");
+      return NextResponse.json({ received: true, stripeEnabled: false });
+    }
+
+    const stripe = new Stripe(secretKey, {
+      apiVersion: "2025-10-29.clover",
+    });
+
     const body = await request.text();
     const signature = request.headers.get("stripe-signature");
 
